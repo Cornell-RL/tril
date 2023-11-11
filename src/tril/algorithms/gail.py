@@ -116,7 +116,7 @@ class GAIL(PPO):
         terminal_rewards = torch.cat(all_scores, dim=0)
         seq_lens = self.buffer.masks.sum(axis=-1)
         self.buffer.rewards = torch.zeros(
-            (self.buffer.total_num_traj, self.max_gen_len), dtype=torch.float32
+            (self.trajectories_per_update, self.max_gen_len), dtype=torch.float32
         )
         for reward, length in zip(terminal_rewards, seq_lens):
             self.buffer.rewards[:, int(length - 1)] = reward
@@ -179,7 +179,6 @@ class GAIL(PPO):
             ) as pbar:
                 for batch_ix, rollout_data in enumerate(self.buffer_dataloader):
                     with self.accelerator.accumulate():
-                        # expert_data = next(self.expert_sampler)
                         # NOTE: we could just grab it from rollout_data.target_ids
 
                         chosen_tokens = rollout_data.observations.to(

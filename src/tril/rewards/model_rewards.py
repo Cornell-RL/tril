@@ -27,8 +27,7 @@ class LearnedRewardFunction(BaseReward, nn.Module):
         self._metric_tokenizer.truncation_side = "left"
         self._metric_model = AutoModelForSequenceClassification.from_pretrained(
             model_name
-        )  # .to(self._accelerator.device)
-        # self._accelerator.prepare(self._metric_model)
+        )
         self._label_ix = label_ix
         self._include_prompt_for_eval = include_prompt_for_eval
 
