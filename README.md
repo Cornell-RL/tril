@@ -49,7 +49,7 @@ cd src/tril/metrics/caption_metrics/spice && bash get_stanford_models.sh
 ## Example Scripts
 In the `examples` directory, there are example scripts to run TRIL algorithms on `IMDB` positive sentiment generation using pytorch `Fully Sharded Data Parallel (FSDP)` and `TL;DR` summarization using `deepspeed`. The name of each script is of the format, `<task>_<alg>.yaml`. Run each experiment like the following:
 ```
-./examples/<script>
+./examples/<task>/<script>
 ```
 
 Within each script the command is
