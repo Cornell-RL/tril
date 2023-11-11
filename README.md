@@ -3,7 +3,7 @@
     <p>Transformers Reinforcement and Imitation Learning Library</p>
 </h3>
 
-`TRIL` is a modular library for Reinforcment Learning (RL) and Imitation Learning (IL) algorithm development with transformers. We directly build on top of [`transformers`](https://github.com/huggingface/transformers), [`accelerate`](https://huggingface.co/docs/accelerate/index), and [`peft`](https://huggingface.co/docs/peft/index) libraries by 🤗 Hugging Face. That way TRIL is able to support open-sourced pretrained models, distributed computing, as well as paramter efficient training. Note we currently support most decoder and encoder-decoder architectures availble in `transformers`.
+`TRIL` is a modular library for Reinforcment Learning (RL) and Imitation Learning (IL) algorithm development with transformers. We directly build on top of [`transformers`](https://github.com/huggingface/transformers), [`accelerate`](https://huggingface.co/docs/accelerate/index), and [`peft`](https://huggingface.co/docs/peft/index) libraries by 🤗 Hugging Face. That way TRIL is able to support open-sourced pretrained models, distributed computing, as well as parameter efficient training. Note we currently support most decoder and encoder-decoder architectures availble in `transformers`.
 
 **Algorithms:**
 
@@ -162,10 +162,23 @@ Here is an example WandB Report of how the logging would look like when running 
 ## Citing TRIL
 If you use TRIL in your publication, please cite it by using the following BibTeX entry.
 ```bibtex
-@Misc{TRIL,
-  title =        {TRIL: Transformers Reinforcement and Imitation Learning Library},
-  author =       {Jonathan Chang, Kiante Brantley, Rajkumar Ramamurthy, Dipendra Misra, and Wen Sun},
-  howpublished = {\url{https://github.com/Cornell-RL/tril}},
-  year =         {2023}
+@software{TRIL,
+          title={TRIL: Transformers Reinforcement and Imitation Learning Library},
+          author={Jonathan D Chang and Kiante Brantley and Rajkumar Ramamurthy and Dipendra Misra and Wen Sun},
+          url={\url{https://github.com/Cornell-RL/tril}},
+          version={0.2.0},
+          year={2023}
+}
+```
+
+Here is the citation of the accompanying paper for many of these algorithms.
+```bibtex
+@misc{chang2023learning,
+      title={Learning to Generate Better Than Your LLM}, 
+      author={Jonathan D. Chang and Kiante Brantley and Rajkumar Ramamurthy and Dipendra Misra and Wen Sun},
+      year={2023},
+      eprint={2306.11816},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
 }
 ```
