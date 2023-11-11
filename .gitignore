@@ -1,11 +1,7 @@
-expert_data/
 outputs/
 output/
 cache/
-run_seeds.sh
-cpi_debug/
-batch_runs/
-#summarization_inference/ppo_high_kl
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -146,26 +142,3 @@ dmypy.json
 .idea/
 cluster_utils/
 **/wandb/
-
-rl4lm_exps/
-imdb/
-*.pt
-online_static/
-commongen_value_fns/
-logs/
-runs/
-one_concept_sanity_checks/
-one_concept*
-batch_test/
-batch_runs/
-# caption_metrics/
-ppo_160K/
-cpi_660K/
-inference_test/
-inference_tests/
-saving_test/
-BC_no_dropout/
-value_decoding/
-value_decoding_save_model/
-commongen_final/
-#*.sub
