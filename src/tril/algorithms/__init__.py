@@ -1,10 +1,10 @@
 from tril.algorithms.aggrevated import AGGREVATED
 from tril.algorithms.bc import BC
-from tril.algorithms.ppo_pp import PPO_PP
 from tril.algorithms.d2lols import D2LOLS
 from tril.algorithms.gail import GAIL
 from tril.algorithms.lols import LOLS
 from tril.algorithms.ppo import PPO
+from tril.algorithms.ppo_pp import PPO_PP
 
 
 class AlgorithmRegistry:

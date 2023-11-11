@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 import torch
 import torch.nn as nn
 from accelerate import Accelerator
+from bitsandbytes.optim import AdamW8bit
 from omegaconf import DictConfig, OmegaConf
 from peft import LoraConfig
 from torch.optim import AdamW, Optimizer
@@ -52,8 +53,11 @@ class Agent(nn.Module):
         self.setup_models()
 
         # Opimizer
+        # self.optimizer_cls = self.cfg.alg.get(
+        #    "optimizer_cls", AdamW
+        # )  # TODO: make optimizer class
         self.optimizer_cls = self.cfg.alg.get(
-            "optimizer_cls", AdamW
+            "optimizer_cls", AdamW8bit
         )  # TODO: make optimizer class
         self.optimizer_kwargs = self.cfg.alg.optimizer_kwargs
         if self.reward_cfg is not None:

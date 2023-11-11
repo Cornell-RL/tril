@@ -69,6 +69,9 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
 
         self.metrics = build_metrics(self.cfg.get("eval_metrics", []), self.accelerator)
         self.samples_by_split = build_task(self.task_cfg)
+        import pdb
+
+        pdb.set_trace()
 
         if hasattr(self.agent.reward, "_spice_metric"):
             assert self.agent.reward is not None

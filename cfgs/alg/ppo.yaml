@@ -142,9 +142,12 @@ tldr:
     seed: 0
     verbose: 0
     n_iters: 1000
-    batch_size: 32
-    grad_accumulation: 4
-    trajectories_per_update: 128
+    #batch_size: 32
+    batch_size: 36
+    #grad_accumulation: 4
+    grad_accumulation: 3
+    #trajectories_per_update: 128
+    trajectories_per_update: 144
     n_epochs: 4
     gamma: 1.0
     gae_lambda: 0.95
@@ -159,7 +162,6 @@ tldr:
     eval_batch_size: 5
     eval_every: 10
     save_every: 100
-    #eval_zero_shot: true
     eval_zero_shot: false
     save_checkpoints: false
     eval_splits: ['val']
