@@ -39,6 +39,6 @@ class LOLS(PPO_PP, AGGREVATED):
         )
 
         if alg_type == "ppo_pp":
-            CPI.collect_rollouts(self)
+            PPO_PP.collect_rollouts(self)
         else:
             AGGREVATED.collect_rollouts(self)
