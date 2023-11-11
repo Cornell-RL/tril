@@ -36,7 +36,15 @@ conda create -n tril python=3.10
 conda activate tril
 pip install -e .
 ```
-Optionally, coreNLP libraries are required for certain metric computations (eg. SPICE) which can be downloaded through `cd src/tril/metrics/caption_metrics/spice && bash get_stanford_models.sh`
+
+Optionally, for `caption_metrics` such as CiDER-D and SPICE, please install these additional dependencies.
+```
+# Spacy model install
+python -m spacy download en_core_web_sm
+
+# CoreNLP library install
+cd src/tril/metrics/caption_metrics/spice && bash get_stanford_models.sh
+```
 
 ## Example Scripts
 In the `examples` directory, there are example scripts to run TRIL algorithms on `IMDB` positive sentiment generation using pytorch `Fully Sharded Data Parallel (FSDP)` and `TL;DR` summarization using `deepspeed`. The name of each script is of the format, `<task>_<alg>.yaml`. Run each experiment like the following:
