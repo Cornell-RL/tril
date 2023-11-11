@@ -1,0 +1,5 @@
+# @package _global_
+
+log_to_wandb: false
+entity_name: null
+project_name: TRIL

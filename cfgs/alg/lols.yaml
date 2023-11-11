@@ -1,0 +1,49 @@
+defaults:
+  - ppo
+  - _self_
+
+alg_id: lols
+
+imdb:
+  id: lols
+
+  args:
+    tau: 0.8
+
+  policy:
+    id: multi_actor_critic
+    args:
+      guide_model_name: rajkumarrrk/gpt2-fine-tuned-on-imdb-positive-reviews
+      alg_type: 'lols'
+      create_guide_critic: true
+      beta:
+        aggrevate: 0.8
+        ppo_pp: 0.8
+      guide_gen_kwargs:
+        do_sample: True
+        top_p: 0.92
+        top_k: 50
+        min_length: 48
+        max_new_tokens: 48
+
+commongen:
+  id: lols
+
+  args:
+    tau: 0.8
+
+  policy:
+    id: multi_actor_critic
+    args:
+      guide_model_name: rajkumarrrk/t5-common-gen
+      alg_type: 'lols'
+      create_guide_critic: true
+      beta:
+        aggrevate: 0.8
+        ppo_pp: 0.8
+      guide_gen_kwargs:
+        do_sample: True
+        top_k: 0
+        min_length: 5
+        max_new_tokens: 20
+        top_p: 0.92

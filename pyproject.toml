@@ -1,0 +1,48 @@
+[project]
+name = "tril"
+version = "0.1.1"
+description = "Transformers Reinforcement and Imitation Learning Library"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+keywords = [
+  "reinforcement learning",
+  "imitation learning",
+  "machine learning",
+  "transformers"
+]
+authors = [
+  {name = "Jonathan Chang", email = "jdc396@cornell.edu"},
+  {name = "Kiante Brantley", email = "kdb82@cornell.edu"},
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  #"Framework :: Reinforcement Learning",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+]
+dynamic = ["dependencies", "readme"]
+
+[tool.setuptools.dynamic]
+dependencies = {file=["requirements.txt"]}
+readme = {file=["README.md"], content-type = "text/markdown"}
+
+[project.urls]
+"Homepage" = "https://github.com/pypa/sampleproject"
+"Source" = "https://github.com/pypa/sampleproject/"
+
+[tool.setuptools.package-data]
+"*" = ["*.sh"]
+
+[tool.isort]
+profile = "black"
+
+[build-system]
+requires = [
+  "setuptools>=68.0.0",
+  "wheel"
+]
+build-backend = "setuptools.build_meta"

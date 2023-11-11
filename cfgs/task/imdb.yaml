@@ -1,0 +1,52 @@
+# @package _global_
+
+task:
+  id: imdb
+  args:
+    seed: 42
+
+reward_fn:
+  id: learned_reward
+  args: 
+    model_name: lvwerra/distilbert-imdb
+    label_ix: 1
+    include_prompt_for_eval: True
+
+sampling:
+  batch_size_per_process: 112
+  max_prompt_len: 64
+  max_gen_len: 48
+  prompt_padding_side: left
+  prompt_truncation_side: left
+  context_padding_side: right
+  context_truncation_side: right
+  train_generation_kwargs:
+    do_sample: True
+    top_k: 50
+    min_length: 48
+    max_new_tokens: 48
+  eval_generation_kwargs:
+    do_sample: True
+    top_k: 50
+    min_length: 48
+    max_new_tokens: 48
+
+eval_metrics:
+  - id: learned_reward
+    args: 
+      model_name: lvwerra/distilbert-imdb
+      label_ix: 1
+      batch_size: 100 
+  - id: causal_perplexity
+    args:
+      tokenizer_id: gpt2
+      stride: 512
+      model_type: causal
+  - id: causal_output_perplexity
+    args:
+      model_id: lvwerra/gpt2-imdb
+      stride: 512
+      model_type: causal
+      #- id: diversity
+      #  args: {}
+

@@ -1,0 +1,43 @@
+alg_id: bc
+
+imdb:
+  id: bc
+  build_reward: False
+
+  args:
+    seed: 0
+    grad_accumulation: 1
+    batch_size_per_process: 15
+    n_epochs: 10
+    eval_batch_size: 100 
+    eval_every: 500
+    save_every: 500 #TODO
+    eval_zero_shot: false
+    save_checkpoints: false #TODO
+    eval_splits: ['val']
+
+  optimizer_kwargs:
+    lr: 1e-5
+    weight_decay: 1e-6
+    eps: 1e-5
+
+  tokenizer:
+    model_name: lvwerra/gpt2-imdb
+    padding_side: left 
+    truncation_side: left 
+    pad_token_as_eos_token: True 
+
+  policy:
+    id: actor
+    args:
+      model_type: causal
+      model_name: lvwerra/gpt2-imdb
+      max_prompt_len: ${sampling.max_prompt_len}
+      max_gen_len: ${sampling.max_gen_len}
+      create_reference: False
+      gen_kwargs:
+        do_sample: True
+        min_length: 48
+        max_new_tokens: 48
+        post_processing_fn: null
+      prompt_truncation_side: ${sampling.prompt_truncation_side}

@@ -1,0 +1,49 @@
+# @package _global_
+
+task:
+  id: commongen
+  args:
+    concept_end_token: '.'
+    concept_separator_token: ' '
+    prefix: "generate a sentence with: "
+
+sampling:
+  batch_size_per_process: 128
+  max_prompt_len: 15
+  max_gen_len: 20
+  prompt_padding_side: left
+  prompt_truncation_side: right
+  context_padding_side: right
+  context_truncation_side: right
+  train_generation_kwargs:
+    do_sample: True
+    top_k: 0
+    min_length: 5
+    max_new_tokens: 20
+  eval_generation_kwargs:
+    do_sample: False
+    num_beams: 5
+    min_length: 5
+    max_new_tokens: 20
+
+reward_fn:
+  id: spider
+  args:
+    spice_coeff: 1.0
+    cider_coeff: 1.0
+
+eval_metrics:
+  - id: meteor
+    args: {}
+  - id: rouge
+    args:
+      use_single_ref: False
+  - id: bleu
+    args: {}
+  - id: bert_score
+    args:
+      language: en
+  - id: cider
+  - id: spice
+      # - id: diversity
+      #args: {}
