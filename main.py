@@ -6,7 +6,7 @@ warnings.simplefilter(action="ignore", category=UserWarning)
 import os
 
 os.environ["NCCL_BLOCKING_WAIT"] = "0"
-# os.environ['DS_SKIP_CUDA_CHECK'] = '1'
+os.environ['DS_SKIP_CUDA_CHECK'] = '1'
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HYDRA_FULL_ERROR"] = "1"

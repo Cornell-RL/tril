@@ -84,12 +84,10 @@ class TLDR(BaseTask):
         for ix, item in enumerate(
             tqdm(ds[split_name], desc=f"Preprocessing {split} Prompts")
         ):
-            if split == "train" and ix == 1000:
+            # TODO: arguments
+            if split == "val" and ix == 500:
                 break
             if split == "test" and ix == 100:
-                break
-
-            if split == "val" and ix == 40:
                 break
             # Process Prompt
             prompt = item["prompt"]
