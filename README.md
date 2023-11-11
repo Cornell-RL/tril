@@ -164,7 +164,7 @@ If you use TRIL in your publication, please cite it by using the following BibTe
 ```bibtex
 @Misc{TRIL,
   title =        {TRIL: Transformers Reinforcement and Imitation Learning Library},
-  author =       {Kiante Brantley, Jonathan Chang, and Wen Sun},
+  author =       {Jonathan Chang, Kiante Brantley, Rajkumar Ramamurthy, Dipendra Misra, and Wen Sun},
   howpublished = {\url{https://github.com/Cornell-RL/tril}},
   year =         {2023}
 }
