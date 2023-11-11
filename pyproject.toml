@@ -1,6 +1,6 @@
 [project]
 name = "tril"
-version = "0.1.1"
+version = "0.2.0"
 description = "Transformers Reinforcement and Imitation Learning Library"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
@@ -18,7 +18,6 @@ classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  #"Framework :: Reinforcement Learning",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
@@ -31,8 +30,8 @@ dependencies = {file=["requirements.txt"]}
 readme = {file=["README.md"], content-type = "text/markdown"}
 
 [project.urls]
-"Homepage" = "https://github.com/pypa/sampleproject"
-"Source" = "https://github.com/pypa/sampleproject/"
+"Homepage" = "https://github.com/Cornell-RL/tril"
+"Source" = "https://github.com/Cornell-RL/tril"
 
 [tool.setuptools.package-data]
 "*" = ["*.sh"]
