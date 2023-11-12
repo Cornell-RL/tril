@@ -17,6 +17,7 @@ from transformers import PreTrainedTokenizer
 
 from tril.policies import PolicyRegistry
 from tril.utils.builders import build_reward_fn
+from tril.utils.helpers import get_optimizer_cls
 
 
 class Agent(nn.Module):
@@ -53,18 +54,11 @@ class Agent(nn.Module):
         self.setup_models()
 
         # Opimizer
-        # self.optimizer_cls = self.cfg.alg.get(
-        #    "optimizer_cls", AdamW
-        # )  # TODO: make optimizer class
-        self.optimizer_cls = self.cfg.alg.get(
-            "optimizer_cls", AdamW8bit
-        )  # TODO: make optimizer class
-        self.optimizer_kwargs = self.cfg.alg.optimizer_kwargs
-        if self.reward_cfg is not None:
-            self.reward_optimizer_cls = self.reward_cfg.get(
-                "optimizer_cls", AdamW
-            )  # TODO: make optimizer class
-            self.reward_optimizer_kwargs = self.reward_cfg.get("optimizer_kwargs", None)
+        self.optimizer_cls = get_optimizer_cls(self.cfg.alg.optimizer.id)
+        if self.reward_cfg is not None and self.reward_cfg.args.get(
+            "is_trainable", False
+        ):
+            self.reward_optimizer_cls = get_optimizer_cls(self.reward_cfg.optimizer.id)
 
     def train(self, mode: bool) -> None:
         """Switches model between train-mode and eval-mode.
@@ -198,12 +192,16 @@ class Agent(nn.Module):
             return grouped_parameters
 
         def create_fn(params, optim_cls, kwargs):
-            grouped_params = group_params(params, self.optimizer_kwargs["weight_decay"])
+            grouped_params = group_params(params, kwargs.weight_decay)
             optimizer = optim_cls(grouped_params, **kwargs)
             return optimizer
 
+        import pdb
+
+        pdb.set_trace()
+
         policy_optimizer = create_fn(
-            self.policy_named_params, self.optimizer_cls, self.optimizer_kwargs
+            self.policy_named_params, self.optimizer_cls, self.cfg.alg.optimizer.args
         )
         if not self.cfg.alg.build_reward or not self.reward.is_trainable:
             return policy_optimizer
@@ -211,7 +209,7 @@ class Agent(nn.Module):
         reward_optimizer = create_fn(
             self.reward_named_params,
             self.reward_optimizer_cls,
-            self.reward_optimizer_kwargs,
+            self.reward_cfg.optimizer.args,
         )
         return policy_optimizer, reward_optimizer
 

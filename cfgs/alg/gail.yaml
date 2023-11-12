@@ -18,7 +18,9 @@ imdb:
       label_ix: 1
       include_prompt_for_eval: True
       is_trainable: True
-    optimizer_kwargs:
-      lr: ${alg.optimizer_kwargs.lr}
-      weight_decay: ${alg.optimizer_kwargs.weight_decay}
-      eps: 1e-5
+    optimizer:
+      id: adamw
+      args:
+        lr: ${alg.optimizer_kwargs.lr}
+        weight_decay: ${alg.optimizer_kwargs.weight_decay}
+        eps: 1e-5

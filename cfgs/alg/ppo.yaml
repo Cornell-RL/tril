@@ -37,10 +37,12 @@ imdb:
     coeff: 0.001
     target_kl: 0.1 
 
-  optimizer_kwargs:
-    lr: 1e-5
-    weight_decay: 1e-6
-    eps: 1e-5
+  optimizer:
+    id: adamw
+    args:
+      lr: 1e-5
+      weight_decay: 1e-6
+      eps: 1e-5
 
   scheduler:
     id: linear

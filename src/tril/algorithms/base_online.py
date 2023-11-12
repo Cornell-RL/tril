@@ -59,6 +59,27 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
         super().__init__(cfg=cfg, accelerator=accelerator, tracker=tracker)
 
     def _setup(self):
+        # Check config values
+        sampling_check = self.trajectories_per_update % (
+            self.sampling_cfg.batch_size_per_process * self.num_processes
+        )
+        if sampling_check != 0:
+            raise ValueError(
+                "`trajectories_per_update` needs to be divisible by `batch_size_per_process` * `num_processes` for proper distributed gpu training. Please edit these values"
+            )  # noqa
+        batch_check = self.batch_size % (
+            self.grad_accumulation_steps * self.num_processes
+        )
+        if batch_check != 0:
+            raise ValueError(
+                "Set `batch_size` must be achievable with set `grad_accumululation` and `num_processes`. Please edit these values"
+            )  # noqa
+        minibatch_check = self.trajectories_per_update % self.batch_size
+        if minibatch_check != 0:
+            raise ValueError(
+                "`trajectories_per_update` needs to be divisible by `batch_size` for proper training. Please edit these values"
+            )  # noqa
+
         # Build Components
         self.tokenizer = build_tokenizer(self.tokenizer_cfg)
         self.agent = Agent(
@@ -69,9 +90,6 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
 
         self.metrics = build_metrics(self.cfg.get("eval_metrics", []), self.accelerator)
         self.samples_by_split = build_task(self.task_cfg)
-        import pdb
-
-        pdb.set_trace()
 
         if hasattr(self.agent.reward, "_spice_metric"):
             assert self.agent.reward is not None
