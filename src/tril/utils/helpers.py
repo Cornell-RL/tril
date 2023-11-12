@@ -83,8 +83,8 @@ def get_optimizer_cls(optimizer_id: str):
         }.get(optimizer_id)
     except Exception:
         raise ValueError(
-            f"{optimizer_id} is currently not supported. Please add to tril.utils.helpers."
-        )  # noqa
+            f"{optimizer_id} is currently not supported. Please add to tril.utils.helpers."  # noqa
+        )
     return optim_cls
 
 

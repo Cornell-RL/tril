@@ -65,20 +65,20 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
         )
         if sampling_check != 0:
             raise ValueError(
-                "`trajectories_per_update` needs to be divisible by `batch_size_per_process` * `num_processes` for proper distributed gpu training. Please edit these values"
-            )  # noqa
+                "`trajectories_per_update` needs to be divisible by `batch_size_per_process` * `num_processes` for proper distributed gpu training. Please edit these values"  # noqa
+            )
         batch_check = self.batch_size % (
             self.grad_accumulation_steps * self.num_processes
         )
         if batch_check != 0:
             raise ValueError(
-                "Set `batch_size` must be achievable with set `grad_accumululation` and `num_processes`. Please edit these values"
-            )  # noqa
+                "Set `batch_size` must be achievable with set `grad_accumululation` and `num_processes`. Please edit these values"  # noqa
+            )
         minibatch_check = self.trajectories_per_update % self.batch_size
         if minibatch_check != 0:
             raise ValueError(
-                "`trajectories_per_update` needs to be divisible by `batch_size` for proper training. Please edit these values"
-            )  # noqa
+                "`trajectories_per_update` needs to be divisible by `batch_size` for proper training. Please edit these values"  # noqa
+            )
 
         # Build Components
         self.tokenizer = build_tokenizer(self.tokenizer_cfg)

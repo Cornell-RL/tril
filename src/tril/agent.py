@@ -3,10 +3,9 @@ from typing import Any, Dict, List, Optional, Union
 import torch
 import torch.nn as nn
 from accelerate import Accelerator
-from bitsandbytes.optim import AdamW8bit
 from omegaconf import DictConfig, OmegaConf
 from peft import LoraConfig
-from torch.optim import AdamW, Optimizer
+from torch.optim import Optimizer
 from torch.optim.lr_scheduler import (
     CosineAnnealingLR,
     LambdaLR,
