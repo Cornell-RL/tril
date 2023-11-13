@@ -1,7 +1,7 @@
 import gc
 import sys
 import time
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import torch
 from accelerate import Accelerator
@@ -240,21 +240,15 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
 
         self.prompt_sampler = infinite_dataloader(self.prompt_loader)
 
-    def generate_batch(self, obs_tensor: Dict[str, torch.Tensor]):
-        # start parallel episodes
-        current_obs = next(self.prompt_sampler)
-
-        # Get Reference
-        target_ids = current_obs["reference_encoded_pt"]
-        target_masks = current_obs["reference_attention_mask_pt"][
-            :, -self.max_gen_len :
-        ]
-
-        obs_tensor = {k: v.to(self.accelerator.device) for k, v in current_obs.items()}
+    def generate_batch(self, 
+        obs_tensor: Dict[str, torch.Tensor],
+        gen_kwargs: Dict[str, Any] = None
+    ):
         gen_output = self.accelerator.unwrap_model(self.agent.policy).generate(
             input_ids=obs_tensor["prompt_or_input_encoded_pt"],
             attention_mask=obs_tensor["prompt_or_input_attention_mask_pt"],
             accelerator=self.accelerator,
+            gen_kwargs=gen_kwargs
         )
         seq_length = len(gen_output["scores"])
         all_tokens = gen_output["sequences"]
@@ -343,8 +337,6 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
             "episode_lengths": seq_lens,
             "total_rewards": total_rewards,
             "masks": masks,
-            "target_ids": target_ids,
-            "target_masks": target_masks,
         }
         torch.cuda.empty_cache()
         return out
