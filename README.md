@@ -108,9 +108,9 @@ if __name__ == '__main__':
 | PPO        | ✅ | ✅ | ✅ |
 | PPO++      | ✅ | ✅ | ✅ |
 | AggreVaTeD | ✅ | ✅ | ✅ |
-| LOLS       | ✅ | ✅ |  |
-| D2LOLS     | ✅ | ✅ |  |
-| BC         | ✅ |  |  |
+| LOLS       | ✅ | ✅ | ✅ |
+| D2LOLS     | ✅ | ✅ | ✅ |
+| BC         | ✅ | ✅ | ✅ |
 | GAIL       | ✅ |  |  |
 
 ## Code Structure
