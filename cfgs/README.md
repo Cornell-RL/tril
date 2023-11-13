@@ -13,6 +13,14 @@ When adding a new task, please add the respective task config in the algorithm c
 ## Config Breakdown
 Here is a more detailed config breakdown for each group.
 
+### Logging
+The logging config is where you can define WandB/logger parameters.
+```
+log_to_wandb: false                             <- Flag for WandB Logging
+entity_name: null                               <- WandB Entity
+project_name: TRIL                              <- WandB Project
+```
+
 ### Task
 In the `task.yaml` there are four fields, `task`, `reward_fn`, `sampling` and `eval_metrics`. 
 
@@ -74,7 +82,96 @@ eval_metrics:                                   <- Metrics for Evaluation (List)
       tokenizer_id: gpt2
       stride: 512
       model_type: causal
+```
 
+### Alg
+This is where we define all algorithm specific parameters. Using `ppo.yaml` and `imdb` as an example here are the subfields.
+
+#### Main section
+We first define the `id` for the [algorithm registry](https://github.com/Cornell-RL/tril/blob/main/src/tril/algorithms/__init__.py) and `args` to instantiate our algorithm.
+```
+id: ppo                                         <- Algorithm ID
+build_reward: True                              <- Build reward for algorithm
+
+args:                                           <- Algorithm Training/Evaluation Arguments
+  seed: 0
+  verbose: 0                                    <- Logging Verbosity
+  n_iters: 50                                   <- Total number of iterations to run `alg.learn`
+  batch_size: 28                                <- Effective batch size (i.e. grad_accumulatin * devices * per_device)
+  grad_accumulation: 1
+  trajectories_per_update: 112                  <- Number of Trajectories/Generations per iteration
+  n_epochs: 5                                   <- Number of Epochs to run within one iteration
+  gamma: 0.99                                   <- Horizon Discount Term
+  gae_lambda: 0.95                              <- Hyperparameter for Generalized Advantage Estimation
+  vf_coef: 0.5                                  <- Critic/Value function loss coefficient
+  target_coef: 0.1                              <- Target Regularization loss coefficient
+  ent_coef: 0.0                                 <- Entropy Regularization loss coefficient
+  target_regularization: true                   <- Flag for target regularization
+  clip_range: 0.2                               <- Clip range for Policy Gradient
+  clip_range_vf: 0.2                            <- Clip range for Critic Value
+  max_grad_norm: 1.0                            <- Gradient Clipping
+  target_kl: null                               <- Early Stopping Condition
+  eval_batch_size: 100
+  eval_every: 10
+  save_every: 100
+  eval_zero_shot: true
+  save_checkpoints: false
+  eval_splits: ['val']                          <- Splits to evaluation on: 'val' and/or 'test'
+  max_prompt_len: ${sampling.max_prompt_len}
+  max_gen_len: ${sampling.max_gen_len}
+```
+
+#### kl_div
+This section, we define the parameters to construct the KL controller used to compute the reward penalty. The `kl_type` field is used to choose our controller.
+```
+kl_div:                                         <- KL Controller Arguments
+  kl_type: 'fixedklcontroller'
+  kl_lr: .01
+  coeff: 0.001                                  <- KL coefficient for reward penalty
+  target_kl: 0.1
+```
+
+#### optimizer and scheduler
+Define the type of optimizer and scheduler as well as the optimizer specific parameters.
+```
+optimizer:                               <- Algorithm Optimizer Arguments
+  id: adamw
+  args:
+    lr: 1e-5
+    weight_decay: 1e-6
+    eps: 1e-5
+
+scheduler:                                      <- Optimizer Scheduler Arguments
+  id: linear
+  args:
+    total_iters: 50
+```
+
+#### tokenizer
+Here we define the tokenizer parameters that our LLM policy will use.
+```
+tokenizer:                                      <- Policy Tokenizer Arguments
+  model_name: lvwerra/gpt2-imdb
+  padding_side: left
+  truncation_side: left
+  pad_token_as_eos_token: True
+```
+
+#### policy
+Here we construct the details of our LLM policy. For example, for PPO, we want to instantiate an `actor_critic` policy while for BC, we may just want an `actor` policy.
+```
+policy:                                         <- Policy Arguments
+  id: actor_critic
+  args:
+    model_type: causal                          <- Either 'causal' or 'seq2seq'
+    model_name: rajkumarrrk/gpt2-fine-tuned-on-imdb-positive-reviews
+    max_prompt_len: ${sampling.max_prompt_len}
+    max_gen_len: ${sampling.max_gen_len}
+    create_reference: True                      <- Whether to create frozen reference model
+    mlp_head: False                             <- MLP critic head
+    quantize_model: False                       <- Flag for load in 4bit
+    gen_kwargs: ${sampling.train_generation_kwargs}
+    prompt_truncation_side: ${sampling.prompt_truncation_side}
 ```
 
 ## Full Config Example
@@ -168,10 +265,12 @@ kl_div:                                         <- KL Controller Arguments
   coeff: 0.001                                  <- KL coefficient for reward penalty
   target_kl: 0.1 
 
-optimizer_kwargs:                               <- Algorithm Optimizer Arguments
-  lr: 1e-5
-  weight_decay: 1e-6
-  eps: 1e-5
+optimizer:                               <- Algorithm Optimizer Arguments
+  id: adamw
+  args:
+    lr: 1e-5
+    weight_decay: 1e-6
+    eps: 1e-5
 
 scheduler:                                      <- Optimizer Scheduler Arguments
   id: linear
