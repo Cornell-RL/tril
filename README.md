@@ -15,6 +15,13 @@
 - Locally Optimal Learning to Search (LOLS) (https://arxiv.org/pdf/2306.11816)
 - Direct and Differentiable Locally Optimal Learning to Search (D2LOLS) (https://arxiv.org/pdf/2306.11816)
 
+**Supported Tasks:**
+- IMDB Positive Sentiment (https://arxiv.org/abs/2210.01241)
+- CommonGen: Common Sense Generation (https://arxiv.org/abs/1911.03705)
+- TL;DR Summarization (https://arxiv.org/pdf/2203.02155.pdf)
+
+<br>
+
 **Planned Algorithms:**
 - Direct Preference Optimization (DPO) (https://arxiv.org/pdf/2305.18290.pdf)
 - Statistical Rejection Sampling Optimization (RSO) (https://arxiv.org/pdf/2309.06657.pdf)
@@ -26,17 +33,6 @@
 **Planned Tasks:**
 - Helpfulness and Harmfullness (https://arxiv.org/pdf/2204.05862.pdf)
 
-### Current Task/Algorithm Support Matrix
-
-| Algorithm  | IMDB | CommonGen | TL;DR |
-|------------| ---- | ---- | ---- |
-| PPO        | ✅ | ✅ | ✅ |
-| PPO++      | ✅ | ✅ | ✅ |
-| AggreVaTeD | ✅ | ✅ | ✅ |
-| LOLS       | ✅ | ✅ | ✅ |
-| D2LOLS     | ✅ | ✅ | ✅ |
-| BC         | ✅ | ✅ | ✅ |
-| GAIL       | ✅ |  |  |
 
 ## Installation
 To install `tril` do:
@@ -116,6 +112,17 @@ if __name__ == '__main__':
 
 `TRIL` also provides an [`AlgorithmRegistry`](https://github.com/Cornell-RL/tril/blob/main/src/tril/algorithms/__init__.py) to instantiate algorithms. Please see our `main.py` to see how our scripts instantiate the algorithms. The list of available algorithms can be seen by the configs in `cfgs/task`.
 
+## Current Task/Algorithm Support Matrix
+
+| Algorithm  | IMDB | CommonGen | TL;DR |
+|------------| ---- | ---- | ---- |
+| PPO        | ✅ | ✅ | ✅ |
+| PPO++      | ✅ | ✅ | ✅ |
+| AggreVaTeD | ✅ | ✅ | ✅ |
+| LOLS       | ✅ | ✅ | ✅ |
+| D2LOLS     | ✅ | ✅ | ✅ |
+| BC         | ✅ | ✅ | ✅ |
+| GAIL       | ✅ |  |  |
 
 ## Code Structure
 The directory structure of the configs, run script, and TRIL components looks like this.
