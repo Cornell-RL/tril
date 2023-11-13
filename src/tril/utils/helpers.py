@@ -6,6 +6,8 @@ from typing import List
 
 import numpy as np
 import torch
+from bitsandbytes.optim import Adam8bit, AdamW8bit
+from torch.optim import Adam, AdamW
 from tqdm import tqdm
 
 from tril.base_task import Sample
@@ -69,6 +71,21 @@ def get_schedule_fn(value_schedule):
     else:
         assert callable(value_schedule)
     return value_schedule
+
+
+def get_optimizer_cls(optimizer_id: str):
+    try:
+        optim_cls = {
+            "adam": Adam,
+            "adamw": AdamW,
+            "adam8bit": Adam8bit,
+            "adamw8bit": AdamW8bit,
+        }.get(optimizer_id)
+    except Exception:
+        raise ValueError(
+            f"{optimizer_id} is currently not supported. Please add to tril.utils.helpers."  # noqa
+        )
+    return optim_cls
 
 
 def set_global_logging_level(level=logging.ERROR, prefices=[""]):

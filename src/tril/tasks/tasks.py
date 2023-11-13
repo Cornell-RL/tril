@@ -1,3 +1,5 @@
+from typing import Dict
+
 from datasets import load_dataset
 from tqdm import tqdm
 from transformers import AutoTokenizer
@@ -69,7 +71,13 @@ class CommonGen(BaseTask):
 
 class TLDR(BaseTask):
     @classmethod
-    def prepare(cls, split: str, tokenizer_id: str, max_prompt_length: int):
+    def prepare(
+        cls,
+        split: str,
+        tokenizer_id: str,
+        max_prompt_length: int,
+        n_samples: Dict[str, int] = {"valid": 100, "test": 500},
+    ):
         tokenizer = AutoTokenizer.from_pretrained(
             tokenizer_id
         )  # NOTE: truncation side | right, padding side | left
@@ -77,32 +85,21 @@ class TLDR(BaseTask):
         tokenizer.padding_side = "left"
         tokenizer.truncation_side = "right"
 
-        ds = load_dataset("CarperAI/openai_summarize_tldr")
-        split_name = TLDR.gen_split_name(split)
-        samples = []
-        # TODO: Cache this processing if we can
-        for ix, item in enumerate(
-            tqdm(ds[split_name], desc=f"Preprocessing {split} Prompts")
-        ):
-            # TODO: arguments
-            if split == "val" and ix == 500:
-                break
-            if split == "test" and ix == 100:
-                break
-            # Process Prompt
-            prompt = item["prompt"]
-            tmp = tokenizer.decode(
+        def process_prompts(example, idxs):
+            prompt = example["prompt"]
+            processed_prompt = [p.split("TL;DR:")[0] for p in prompt]
+            tmp = tokenizer.batch_decode(
                 tokenizer(
-                    prompt.split("TL;DR:")[0],
+                    processed_prompt,
                     truncation=True,
                     max_length=max_prompt_length
                     - 5,  # to make sure "TL;DR" dont get truncated
                     add_special_tokens=False,
                 )["input_ids"],
                 skip_special_tokens=True,
-            ).strip()
-            tmp = tmp + "\nTL;DR:"
-            tmp = tokenizer.decode(
+            )
+            tmp = [t.strip() + "\nTL;DR:" for t in tmp]
+            tmp = tokenizer.batch_decode(
                 tokenizer(
                     tmp,
                     truncation=True,
@@ -110,14 +107,34 @@ class TLDR(BaseTask):
                     add_special_tokens=False,
                 )["input_ids"],
                 skip_special_tokens=True,
-            ).strip()
+            )
+            tmp = [t.strip() for t in tmp]
+            return {"id": idxs, "prompt": tmp, "label": example["label"]}
 
+        ds = load_dataset("CarperAI/openai_summarize_tldr")
+        split_name = TLDR.gen_split_name(split)
+        samples = []
+
+        # Map does caching
+        split_ds = ds[split_name].map(
+            process_prompts, with_indices=True, batched=True, batch_size=1000
+        )
+        n_split = n_samples.get(split_name, len(split_ds))
+        for prompt, label, ids in tqdm(
+            zip(
+                split_ds[:n_split]["prompt"],
+                split_ds[:n_split]["label"],
+                split_ds[:n_split]["id"],
+            ),
+            desc=f"Preprocessing {split} Prompts",
+            total=n_split,
+        ):
             # Create Sample
             sample = Sample(
-                id=ix,
-                prompt_or_input_text=tmp,
-                references=[item["label"]],
-                meta_data={"reference": item["label"]},
+                id=ids,
+                prompt_or_input_text=prompt,
+                references=[label],
+                meta_data={"reference": label},
             )
             samples.append(sample)
         task_instance = cls(samples)

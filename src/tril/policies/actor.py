@@ -8,7 +8,7 @@ from accelerate import Accelerator
 from huggingface_hub import PyTorchModelHubMixin
 from numpy.random import Generator
 from omegaconf import DictConfig, OmegaConf
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from torch.distributions import Categorical
 from transformers import BitsAndBytesConfig, PreTrainedTokenizer
 from transformers.generation.logits_process import LogitsProcessorList
@@ -67,6 +67,7 @@ class LMActor(nn.Module, PyTorchModelHubMixin):
             )
             self.model.__class__ = override_generation_routines(type(self.model))
             if self.peft_config is not None:
+                self.model = prepare_model_for_kbit_training(self.model, use_gradient_checkpointing=False)  # TODO: flag for gradient checkpointing 
                 self.model = get_peft_model(
                     self.model, self.peft_config, self.policy_adapter_name
                 )

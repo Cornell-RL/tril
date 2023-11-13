@@ -8,6 +8,7 @@ task:
 
 sampling:
   batch_size_per_process: 32
+  #batch_size_per_process: 36
   max_prompt_len: 500
   max_gen_len: 50
   prompt_padding_side: left

@@ -28,7 +28,6 @@ class PairwiseOfflineBuffer(Dataset):
         self.chosen_attn_masks = []
         self.rejected_input_ids = []
         self.rejected_attn_masks = []
-        # counter = 0
         for pair in tqdm(samples, desc="Processing Dataset: "):
             prompt, chosen, rejected = (
                 pair.prompt_or_input_text,
@@ -61,10 +60,6 @@ class PairwiseOfflineBuffer(Dataset):
                 self.rejected_attn_masks.append(
                     rejected_encodings_dict["attention_mask"]
                 )
-
-            # counter += 1
-            # if counter == 100:
-            #    break
 
     def __len__(self):
         return len(self.chosen_input_ids)

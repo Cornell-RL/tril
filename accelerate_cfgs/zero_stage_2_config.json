@@ -14,7 +14,11 @@
         },
         "allgather_partitions": true,
         "allgather_bucket_size": 5e8,
-        "contiguous_gradients": true
+        "contiguous_gradients": true,
+        "overlap_comm": true,
+        "reduce_scatter": true,
+        "reduce_bucket_size": 5e8,
+        "round_robin_gradients": true
     },
     "train_batch_size": "auto",
     "train_micro_batch_size_per_gpu": "auto",

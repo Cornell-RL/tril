@@ -207,6 +207,7 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
         ref_ids=None,
         ref_mask=None,
         retokenize=True,
+        scale_by_ref=False,
     ):
         self.model.set_adapter(self.rm_adapter_name)
         self.model.eval()
@@ -261,7 +262,7 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
         rewards = rewards.cpu()
 
         # Ref norm
-        if ref_ids is not None:
+        if ref_ids is not None and scale_by_ref:
             if retokenize:
                 # Retokenize:
                 samples = tokenizer.batch_decode(ref_ids, skip_special_tokens=True)
