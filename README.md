@@ -99,7 +99,7 @@ if __name__ == '__main__':
     run_ppo()
 ```
 
-`TRIL` also provides an [`AlgorithmRegistry`](https://github.com/xkianteb/coactive_learning/blob/main/tril/algorithms/__init__.py) to instantiate algorithms. Please see our `main.py` to see how our scripts instantiate the algorithms. The list of available algorithms can be seen by the configs in `cfgs/task`.
+`TRIL` also provides an [`AlgorithmRegistry`](https://github.com/Cornell-RL/tril/blob/main/src/tril/algorithms/__init__.py) to instantiate algorithms. Please see our `main.py` to see how our scripts instantiate the algorithms. The list of available algorithms can be seen by the configs in `cfgs/task`.
 
 ## Current Task/Algorithm Support Matrix
 
