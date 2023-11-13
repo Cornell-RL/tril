@@ -514,6 +514,10 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
                 print_memory(self.accelerator, tracemalloc, "sampling")
 
             # =========== Train ===========
+            gc.collect()
+            torch.cuda.empty_cache()
+            gc.collect()
+
             with TorchTracemalloc() as tracemalloc:
                 self.train_step()
             if self.verbose > 0:

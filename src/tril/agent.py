@@ -195,10 +195,6 @@ class Agent(nn.Module):
             optimizer = optim_cls(grouped_params, **kwargs)
             return optimizer
 
-        import pdb
-
-        pdb.set_trace()
-
         policy_optimizer = create_fn(
             self.policy_named_params, self.optimizer_cls, self.cfg.alg.optimizer.args
         )
