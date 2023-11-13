@@ -10,10 +10,7 @@ task2:
 ```
 When adding a new task, please add the respective task config in the algorithm config. Specifically, if you're adding a task with name `helpfulness`, and want to run `ppo`, add a `helpfulness:` field inside of `ppo.yaml`.  
 
-## Config Breakdown
-Here is a more detailed config breakdown for each group.
-
-### Logging
+## Logging Config: `logging`
 The logging config is where you can define WandB/logger parameters.
 ```
 log_to_wandb: false                             <- Flag for WandB Logging
@@ -21,7 +18,7 @@ entity_name: null                               <- WandB Entity
 project_name: TRIL                              <- WandB Project
 ```
 
-### Task
+## Task Config: `task`
 In the `task.yaml` there are four fields, `task`, `reward_fn`, `sampling` and `eval_metrics`. 
 
 #### task
@@ -84,7 +81,7 @@ eval_metrics:                                   <- Metrics for Evaluation (List)
       model_type: causal
 ```
 
-### Alg
+## Algorithm Config: `alg`
 This is where we define all algorithm specific parameters. Using `ppo.yaml` and `imdb` as an example here are the subfields.
 
 #### Main section
