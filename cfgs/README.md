@@ -119,7 +119,7 @@ args:                                           <- Algorithm Training/Evaluation
 ```
 
 #### kl_div
-This section, we define the parameters to construct the KL controller used to compute the reward penalty. The `kl_type` field is used to choose our controller.
+This section, we define the parameters to construct the KL controller used to compute the reward penalty. The `kl_type` field is used to choose our controller from the [kl registry](https://github.com/Cornell-RL/tril/blob/a95befdc58c0d5535c8145e62b7ba25b630d3c39/src/tril/utils/kl_controller.py#L187).
 ```
 kl_div:                                         <- KL Controller Arguments
   kl_type: 'fixedklcontroller'
