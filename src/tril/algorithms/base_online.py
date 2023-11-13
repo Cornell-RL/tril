@@ -261,15 +261,14 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
 
         self.prompt_sampler = infinite_dataloader(self.prompt_loader)
 
-    def generate_batch(self, 
-        obs_tensor: Dict[str, torch.Tensor],
-        gen_kwargs: Dict[str, Any] = None
+    def generate_batch(
+        self, obs_tensor: Dict[str, torch.Tensor], gen_kwargs: Dict[str, Any] = None
     ):
         gen_output = self.accelerator.unwrap_model(self.agent.policy).generate(
             input_ids=obs_tensor["prompt_or_input_encoded_pt"],
             attention_mask=obs_tensor["prompt_or_input_attention_mask_pt"],
             accelerator=self.accelerator,
-            gen_kwargs=gen_kwargs
+            gen_kwargs=gen_kwargs,
         )
         seq_length = len(gen_output["scores"])
         all_tokens = gen_output["sequences"]

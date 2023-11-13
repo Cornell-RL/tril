@@ -10,6 +10,73 @@ task2:
 ```
 When adding a new task, please add the respective task config in the algorithm config. Specifically, if you're adding a task with name `helpfulness`, and want to run `ppo`, add a `helpfulness:` field inside of `ppo.yaml`.  
 
+## Config Breakdown
+Here is a more detailed config breakdown for each group.
+
+### Task
+In the `task.yaml` there are four fields, `task`, `reward_fn`, `sampling` and `eval_metrics`. 
+
+#### task
+The `id` refers to the name in the [task registry](https://github.com/Cornell-RL/tril/blob/main/src/tril/tasks/__init__.py) while the `args` are task specific parameters defined in [tasks.py](https://github.com/Cornell-RL/tril/blob/main/src/tril/tasks/tasks.py).
+```
+task:                                           <- Task Config
+  id: imdb                                      <- Task Name
+  args:                                         <- Task Arguments
+    seed: 42
+```
+
+
+#### reward_fn
+The `id` refers to the name in the [reward_registry](https://github.com/Cornell-RL/tril/blob/main/src/tril/rewards/__init__.py) while the `args` are reward specific parameters. Note this field can be overwritten if defined in `alg`. For example, for GAIL, we have the reward be overwritten by [gail.yaml](https://github.com/Cornell-RL/tril/blob/main/cfgs/alg/gail.yaml).
+```
+reward_fn:                                      <- Reward Config
+  id: learned_reward                            <- Reward Arguments
+  args: 
+    model_name: lvwerra/distilbert-imdb
+    label_ix: 1
+    include_prompt_for_eval: True
+```
+
+#### sampling
+This field defines all the decoding and online data collection specific for each task. This involves, tokenizer details, generation lengths, per device sampling capacities, and train/eval decoding. Note `batch_size_per_process` denotes how many generations `model.generate()` will generate *per* process. For example, with four gpus and the following config, we would generate 448 trajectories per sampling iteration.
+```
+sampling:                                       <- Config for sampling/decoding of models
+  batch_size_per_process: 112
+  max_prompt_len: 64
+  max_gen_len: 48
+  prompt_padding_side: left
+  prompt_truncation_side: left
+  context_padding_side: right
+  context_truncation_side: right
+  train_generation_kwargs:                      <- Training Generation Arguments
+    do_sample: True
+    top_k: 50
+    min_length: 48
+    max_new_tokens: 48
+  eval_generation_kwargs:                       <- Evaluation Generation Arguments
+    do_sample: True
+    top_k: 50
+    min_length: 48
+    max_new_tokens: 48
+```
+
+#### eval_metrics
+Finally, define the evaluation metrics as a list for this task. Similar to reward_fn and task, the `id` is what the metric is registered under in the [metric registry](https://github.com/Cornell-RL/tril/blob/main/src/tril/metrics/__init__.py).
+```
+eval_metrics:                                   <- Metrics for Evaluation (List)
+  - id: learned_reward
+    args: 
+      model_name: lvwerra/distilbert-imdb
+      label_ix: 1
+      batch_size: 100 
+  - id: causal_perplexity
+    args:
+      tokenizer_id: gpt2
+      stride: 512
+      model_type: causal
+
+```
+
 ## Full Config Example
 
 Here is a full example config for a `PPO` run

@@ -67,7 +67,9 @@ class LMActor(nn.Module, PyTorchModelHubMixin):
             )
             self.model.__class__ = override_generation_routines(type(self.model))
             if self.peft_config is not None:
-                self.model = prepare_model_for_kbit_training(self.model, use_gradient_checkpointing=False)  # TODO: flag for gradient checkpointing 
+                self.model = prepare_model_for_kbit_training(
+                    self.model, use_gradient_checkpointing=False
+                )  # TODO: flag for gradient checkpointing
                 self.model = get_peft_model(
                     self.model, self.peft_config, self.policy_adapter_name
                 )
