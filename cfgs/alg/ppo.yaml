@@ -205,7 +205,7 @@ tldr:
       max_gen_len: ${sampling.max_gen_len}
       create_reference: True
       mlp_head: False
-      quantize_model: False
+      quantize_model: True
       gen_kwargs: ${sampling.train_generation_kwargs}
       prompt_truncation_side: ${sampling.prompt_truncation_side}
 

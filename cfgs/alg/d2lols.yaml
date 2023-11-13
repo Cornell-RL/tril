@@ -47,3 +47,25 @@ commongen:
         min_length: 5
         max_new_tokens: 20
         top_p: 0.92
+
+tldr:
+  id: d2lols
+
+  args:
+    tau: 200
+
+  policy:
+    id: multi_actor_critic
+    args:
+      guide_model_name: CarperAI/openai_summarize_tldr_sft
+      alg_type: 'd2lols'
+      create_guide_critic: true
+      beta:
+        aggrevate: 0.8
+        ppo_pp: 0.8
+      guide_gen_kwargs:
+        do_sample: True
+        top_k: 0
+        min_length: 5
+        max_new_tokens: 20
+        top_p: 0.92
