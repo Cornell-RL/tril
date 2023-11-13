@@ -20,7 +20,7 @@
 - CommonGen: Common Sense Generation (https://arxiv.org/abs/1911.03705)
 - TL;DR Summarization (https://arxiv.org/pdf/2203.02155.pdf)
 
-<br>
+---
 
 **Planned Algorithms:**
 - Direct Preference Optimization (DPO) (https://arxiv.org/pdf/2305.18290.pdf)
