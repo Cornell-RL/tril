@@ -23,6 +23,21 @@
 - Advantage-Induced Policy Alignment (APA) (https://arxiv.org/pdf/2306.02231.pdf)
 - Advantage-Leftover Lunch RL (A-LoL) (https://arxiv.org/abs/2305.14718)
 
+**Planned Tasks:**
+- Helpfulness and Harmfullness (https://arxiv.org/pdf/2204.05862.pdf)
+
+### Current Task/Algorithm Support Matrix
+
+| Algorithm  | IMDB | CommonGen | TL;DR |
+|------------| ---- | ---- | ---- |
+| PPO        | ✅ | ✅ | ✅ |
+| PPO++      | ✅ | ✅ | ✅ |
+| AggreVaTeD | ✅ | ✅ | ✅ |
+| LOLS       | ✅ | ✅ | ✅ |
+| D2LOLS     | ✅ | ✅ | ✅ |
+| BC         | ✅ | ✅ | ✅ |
+| GAIL       | ✅ |  |  |
+
 ## Installation
 To install `tril` do:
 ```
@@ -101,17 +116,6 @@ if __name__ == '__main__':
 
 `TRIL` also provides an [`AlgorithmRegistry`](https://github.com/Cornell-RL/tril/blob/main/src/tril/algorithms/__init__.py) to instantiate algorithms. Please see our `main.py` to see how our scripts instantiate the algorithms. The list of available algorithms can be seen by the configs in `cfgs/task`.
 
-## Current Task/Algorithm Support Matrix
-
-| Algorithm  | IMDB | CommonGen | TL;DR |
-|------------| ---- | ---- | ---- |
-| PPO        | ✅ | ✅ | ✅ |
-| PPO++      | ✅ | ✅ | ✅ |
-| AggreVaTeD | ✅ | ✅ | ✅ |
-| LOLS       | ✅ | ✅ | ✅ |
-| D2LOLS     | ✅ | ✅ | ✅ |
-| BC         | ✅ | ✅ | ✅ |
-| GAIL       | ✅ |  |  |
 
 ## Code Structure
 The directory structure of the configs, run script, and TRIL components looks like this.
