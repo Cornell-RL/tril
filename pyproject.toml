@@ -1,6 +1,6 @@
 [project]
 name = "tril"
-version = "0.2.0"
+version = "0.2.1"
 description = "Transformers Reinforcement and Imitation Learning Library"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}

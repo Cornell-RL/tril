@@ -1,6 +1,6 @@
 <h1 align="center"> <p>TRIL</p></h1>
 <h3 align="center">
-    <p>Transformers Reinforcement and Imitation Learning Library</p>
+    <p>Transformer Reinforcement and Imitation Learning Library</p>
 </h3>
 
 `TRIL` is a modular library for Reinforcment Learning (RL) and Imitation Learning (IL) algorithm development with transformers. We directly build on top of [`transformers`](https://github.com/huggingface/transformers), [`accelerate`](https://huggingface.co/docs/accelerate/index), and [`peft`](https://huggingface.co/docs/peft/index) libraries by 🤗 Hugging Face. That way TRIL is able to support open-sourced pretrained models, distributed computing, as well as parameter efficient training. Note we currently support most decoder and encoder-decoder architectures availble in `transformers`.
@@ -43,6 +43,8 @@ For the run scripts and the example scripts for usage please see the respository
 
 To setup a development environment we use `conda` for version control. To install TRIL, please follow these steps
 ```
+git clone https://github.com/Cornell-RL/tril.git
+cd tril
 conda create -n tril python=3.10
 conda activate tril
 pip install -e .
@@ -58,7 +60,7 @@ cd src/tril/metrics/caption_metrics/spice && bash get_stanford_models.sh
 ```
 
 ## Example Scripts
-In the `examples` directory, there are example scripts to run TRIL algorithms on `IMDB` positive sentiment generation using pytorch `Fully Sharded Data Parallel (FSDP)` and `TL;DR` summarization using `deepspeed`. The name of each script is of the format, `<task>_<alg>.yaml`. Run each experiment like the following:
+In the `examples` directory, there are example scripts to run TRIL algorithms on `IMDB` positive sentiment generation using pytorch `Fully Sharded Data Parallel (FSDP)` and `TL;DR` summarization using `deepspeed`. The name of each script is of the format, `<task>_<alg>.sh`. Run each experiment like the following:
 ```
 ./examples/<task>/<script>
 ```
