@@ -27,9 +27,6 @@ def evaluate_on_samples(
     gen_kwargs: Dict[str, Any] = None,
     positive_samples=None,
 ):
-    # TODO: Don't hardcode
-    tokenizer.padding_side = "left"
-    tokenizer.truncation_side = "right"
     # put in eval mode
     agent.eval()
 

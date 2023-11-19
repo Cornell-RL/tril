@@ -8,7 +8,6 @@ task:
 
 sampling:
   batch_size_per_process: 32
-  #batch_size_per_process: 36
   max_prompt_len: 500
   max_gen_len: 50
   prompt_padding_side: left
@@ -25,7 +24,6 @@ sampling:
 reward_fn:
   id: adapter_reward
   args:
-    #adapter_id: rm_adapter_checkpoint_0.7
     adapter_id: jdchang/tldr_rm_adapter
     reward_tokenizer_id: EleutherAI/gpt-j-6B
 

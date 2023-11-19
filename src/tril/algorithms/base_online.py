@@ -429,6 +429,7 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
             self.tracker.log_rollout_infos(gathered_metrics)
 
     def eval_step(self, epoch: int):
+        # FSDP Prepare
         if self.dist_type == DistributedType.FSDP:
             fsdp_prepare(
                 self.agent,
@@ -441,6 +442,12 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
                 and self.agent.reward._dist_type == RewardType.DIST
             ):
                 fsdp_reward_prepare(self.agent.reward, self.accelerator)
+
+        # Setup Tokenizer for Evaluation
+        self.tokenizer.padding_side = self.sampling_cfg.prompt_padding_side
+        self.tokenizer.truncation_side = self.sampling_cfg.context_trunction_side
+
+        # Evaluate on Defined Splits
         for split in self.eval_splits:
             evaluate_on_samples(
                 agent=self.agent,

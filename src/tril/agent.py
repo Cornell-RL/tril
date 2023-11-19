@@ -125,11 +125,7 @@ class Agent(nn.Module):
 
         params = list(self.policy.get_named_parameters())
         if self.lora_cfg is not None:
-            adapter_params = [
-                p for p in params if "adapter" in p[0] and "reward_adapter" not in p[0]
-            ]
-            head_params = [p for p in params if "score" in p[0]]
-            params = adapter_params + head_params
+            params = [p for p in params if "reward_adapter" not in p[0]]
         return params
 
     @property

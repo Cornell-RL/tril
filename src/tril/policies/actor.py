@@ -101,11 +101,27 @@ class LMActor(nn.Module, PyTorchModelHubMixin):
             return ModelType.SEQ2SEQ
 
     def get_parameters(self):
-        # Override to exclude Reference
+        if self.peft_config is not None:
+            params = []
+            for name, param in self.named_parameters():
+                if "adapter" not in name:
+                    params.append(param)
+                else:
+                    if self.policy_adapter_name in name:
+                        params.append(param)
+            return params
         return self.model.parameters()
 
     def get_named_parameters(self):
-        # Override to exclude Reference
+        if self.peft_config is not None:
+            params = []
+            for name, param in self.named_parameters():
+                if "adapter" not in name:
+                    params.append((name, param))
+                else:
+                    if self.policy_adapter_name in name:
+                        params.append((name, param))
+            return params
         return self.model.named_parameters()
 
     def get_model(self, model_fn):

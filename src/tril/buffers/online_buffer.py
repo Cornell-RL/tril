@@ -153,7 +153,7 @@ class OnlineBuffer(Dataset):
             self.full = True
 
     def compute_returns_and_advantage(self) -> None:
-        last_gae_lam = 0
+        last_gae_lam = 0.0
         values = self.values * self.masks
         rewards = self.rewards * self.masks
         for step in reversed(range(self.max_gen_len)):
@@ -161,8 +161,6 @@ class OnlineBuffer(Dataset):
             delta = rewards[:, step] + self.gamma * next_values - values[:, step]
             last_gae_lam = delta + self.gamma * self.gae_lambda * last_gae_lam
             self.advantages[:, step] = last_gae_lam
-        # TD(lambda) estimator, see Github PR #375 or "Telescoping in TD(lambda)"
-        # in David Silver Lecture 4: https://www.youtube.com/watch?v=PnHCvfgC_ZA
         self.returns = self.advantages + values
 
     def __len__(self):

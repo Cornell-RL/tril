@@ -68,24 +68,36 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
             self.score = nn.Sequential(
                 nn.Linear(hidden_size, hidden_size * 2),
                 nn.ReLU(),
-                nn.Linear(hidden_size * 2, 1, bias=False),
+                nn.Linear(hidden_size * 2, 1),
             )
         else:
-            self.score = nn.Linear(hidden_size, 1, bias=False)
+            self.score = nn.Linear(hidden_size, 1)
 
         if quantize_model:
             self.score = self.score.half()
 
     def get_parameters(self):
         if self.peft_config is not None:
-            # Since we are passing by reference, self.actor.parameters gets all params
-            return []
+            params = []
+            for name, param in self.named_parameters():
+                if self.value_adapter_name in name:
+                    params.append(param)
+                if "adapter" not in name and "score" in name:
+                    params.append(param)
+            return params
         return self.parameters()
 
     def get_named_parameters(self):
         if self.peft_config is not None:
             # Since we are passing by reference, self.actor.parameters gets all params
-            return []
+            # TODO: we need to fix this when just using critic
+            params = []
+            for name, param in self.named_parameters():
+                if self.value_adapter_name in name:
+                    params.append((name, param))
+                if "adapter" not in name and "score" in name:
+                    params.append((name, param))
+            return params
         return self.named_parameters()
 
     @property

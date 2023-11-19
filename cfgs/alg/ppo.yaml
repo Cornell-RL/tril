@@ -147,12 +147,8 @@ tldr:
     verbose: 0
     n_iters: 1000
     batch_size: 32
-    #batch_size: 36
     grad_accumulation: 4
-    #grad_accumulation: 2
-    #grad_accumulation: 3
     trajectories_per_update: 128
-    #trajectories_per_update: 144
     n_epochs: 4
     gamma: 1.0
     gae_lambda: 0.95
@@ -180,11 +176,10 @@ tldr:
     target_kl: 0.1 
 
   optimizer:
-    id: adamw8bit
-    #id: adamw
+    id: adamw
     args:
       lr: 5e-6
-      weight_decay: 1e-6
+      weight_decay: 0.01
       eps: 1e-5
 
   scheduler:

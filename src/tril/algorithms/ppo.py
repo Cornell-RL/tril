@@ -257,6 +257,9 @@ class PPO(BaseOnPolicyAlgorithm):
                             self.alg_metric_tracker.add(
                                 "advantages", advantages.mean().item()
                             )
+                            self.alg_metric_tracker.add(
+                                "returns", returns.mean().item()
+                            )
 
                         pad_percent = 100 * (
                             1.0 - n_samples / torch.prod(torch.tensor(masks.shape))
