@@ -445,7 +445,7 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
 
         # Setup Tokenizer for Evaluation
         self.tokenizer.padding_side = self.sampling_cfg.prompt_padding_side
-        self.tokenizer.truncation_side = self.sampling_cfg.context_trunction_side
+        self.tokenizer.truncation_side = self.sampling_cfg.context_truncation_side
 
         # Evaluate on Defined Splits
         for split in self.eval_splits:
