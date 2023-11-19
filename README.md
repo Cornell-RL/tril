@@ -3,7 +3,7 @@
     <p>Transformer Reinforcement and Imitation Learning Library</p>
 </h3>
 
-`TRIL` is a modular library for Reinforcment Learning (RL) and Imitation Learning (IL) algorithm development with transformers. We directly build on top of [`transformers`](https://github.com/huggingface/transformers), [`accelerate`](https://huggingface.co/docs/accelerate/index), and [`peft`](https://huggingface.co/docs/peft/index) libraries by 🤗 Hugging Face. That way TRIL is able to support open-sourced pretrained models, distributed computing, as well as parameter efficient training. Note we currently support most decoder and encoder-decoder architectures availble in `transformers`.
+`TRIL` is a modular library for Reinforcement Learning (RL) and Imitation Learning (IL) algorithm development with transformers. We directly build on top of [`transformers`](https://github.com/huggingface/transformers), [`accelerate`](https://huggingface.co/docs/accelerate/index), and [`peft`](https://huggingface.co/docs/peft/index) libraries by 🤗 Hugging Face. That way TRIL is able to support open-sourced pretrained models, distributed computing, as well as parameter efficient training. Note we currently support most decoder and encoder-decoder architectures availble in `transformers`.
 
 **Supported Algorithms:**
 
