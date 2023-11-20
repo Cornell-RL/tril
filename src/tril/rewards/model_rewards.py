@@ -193,7 +193,7 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
 
         # Add reward adapter
         self.model.add_adapter(adapter_name, rm_adapter_peft_config)
-        self.rm_adapter_name = adapter_name
+        #self.rm_adapter_name = adapter_name
 
         num_labels, hidden_dim = score_dict["weight"].shape
         has_bias = any(["bias" in name for name in adapter_state_dict.keys()])
