@@ -73,4 +73,8 @@ class BC(BaseSupervised):
                     }
                     aggregated_training_info["train/epoch"] = progress_so_far
                     self.tracker.log_training_infos(aggregated_training_info)
+                    if self.save_checkpoints:
+                        self.tracker.save_auto_model(
+                            self.agent.policy, self.accelerator, step
+                        )
                 step += 1

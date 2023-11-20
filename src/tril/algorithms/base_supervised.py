@@ -84,13 +84,13 @@ class BaseSupervised(BaseAlgorithm):
     def _prepare_deepspeed(self):
         self.optimizer = self.agent.setup_optimizer()
         (
-            self.model,
+            self.agent,
             self.optimizer,
             self.train_dataloader,
             self.dataloaders["val"],
             self.dataloaders["test"],
         ) = self.accelerator.prepare(
-            self.model,
+            self.agent,
             self.optimizer,
             self.dataloaders["train"],
             self.dataloaders["val"],
@@ -159,7 +159,7 @@ class BaseSupervised(BaseAlgorithm):
         # Evaluate on Defined Splits
         for split in self.eval_splits:
             evaluate_on_samples(
-                policy=self.agent.policy,
+                agent=self.agent,
                 tokenizer=self.tokenizer,
                 dataloader=self.dataloaders[split],
                 max_prompt_length=self.max_prompt_len,
