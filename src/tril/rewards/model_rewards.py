@@ -114,18 +114,23 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
         reward_tokenizer_id: str,
         peft_config=None,
         is_trainable: bool = False,
+        create_reference: bool = False,
     ):
         super().__init__(accelerator, RewardType.DIST, is_trainable)
         self.model = model
 
+        self.create_reference = create_reference
+        self.rm_adapter_name = "reward_adapter"
         if adapter_id:
             self.load_reward_adapter(adapter_id)
+            if self.create_reference:
+                self.load_reward_adapter(adapter_id, "reward_ref_adapter")
+                self.ref_rm_adapter_name = "reward_ref_adapter"
         else:
             if peft_config is None:
                 raise Exception(
                     "Note you need to either pass in a pretrained adapter id or a peft config to instantiate"  # noqa
                 )
-            self.rm_adapter_name = "reward_adapter"
             config = LoraConfig(**peft_config)
             self.model.add_adapter(self.rm_adapter_name, config)
             hidden_dim = self.model.config.hidden_size
@@ -140,6 +145,13 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
         self.train(mode)
 
     def get_parameters(self):
+        if self.create_reference:
+            named_params = self.named_parameters()
+            params = []
+            for n, p in named_params:
+                if self.ref_rm_adapter_name not in n:
+                    params.append(p)
+            return params
         return self.parameters()
 
     def load_reward_adapter(
@@ -197,6 +209,15 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
             self.model, adapter_state_dict, adapter_name=adapter_name
         )
 
+    def get_reward_fn(self, model_fn):
+        if not self.create_reference:
+            return self.rm_adapter_name
+        else:
+            if model_fn == "ref":
+                return self.ref_rm_adapter_name
+            else:
+                return self.rm_adapter_name
+
     @torch.no_grad()
     def compute_reward(
         self,
@@ -207,9 +228,11 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
         ref_ids=None,
         ref_mask=None,
         retokenize=True,
+        model_fn="reward",
         scale_by_ref=False,
     ):
-        self.model.set_adapter(self.rm_adapter_name)
+        adapter_name = self.get_reward_fn(model_fn)
+        self.model.set_adapter(adapter_name)
         self.model.eval()
 
         # Retokenize:
@@ -265,7 +288,7 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
         if ref_ids is not None and scale_by_ref:
             if retokenize:
                 # Retokenize:
-                samples = tokenizer.batch_decode(ref_ids, skip_special_tokens=True)
+                samples = tokenizer.batch_decode(ref_ids.int(), skip_special_tokens=True)
                 samples = [
                     "<|startoftext|>" + sample + "<|endoftext|>" for sample in samples
                 ]  # TODO: make template more general
@@ -329,7 +352,7 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
 
         # Retokenize:
         if retokenize:
-            samples = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
+            samples = tokenizer.batch_decode(input_ids.int(), skip_special_tokens=True)
             samples = [
                 "<|startoftext|>" + sample + "<|endoftext|>" for sample in samples
             ]

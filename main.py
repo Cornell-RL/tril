@@ -22,6 +22,7 @@ from omegaconf import DictConfig, OmegaConf
 from tril import tril_run
 from tril.algorithms import AlgorithmRegistry
 from tril.logging import Tracker
+from tril.utils.multi_engine_accelerator import DeepspeedMultiEngineAccelerator
 
 
 @hydra.main(version_base=None, config_path="cfgs", config_name="config")
@@ -29,7 +30,8 @@ from tril.logging import Tracker
 def main(cfg: DictConfig):
     # init accelerator
     kwargs = InitProcessGroupKwargs(timeout=timedelta(seconds=720000))
-    accelerator = Accelerator(
+    #accelerator = Accelerator(
+    accelerator = DeepspeedMultiEngineAccelerator(
         dispatch_batches=False,
         gradient_accumulation_steps=cfg.alg.args.grad_accumulation,
         kwargs_handlers=[kwargs],

@@ -59,7 +59,7 @@ class Agent(nn.Module):
         ):
             self.reward_optimizer_cls = get_optimizer_cls(self.reward_cfg.optimizer.id)
 
-    def train(self, mode: bool) -> None:
+    def training_mode(self, mode: bool) -> None:
         """Switches model between train-mode and eval-mode.
 
         Predominantly used to disable dropout and batchnorm.
@@ -88,6 +88,7 @@ class Agent(nn.Module):
                 all_tokens,
                 ref_ids=obs_tensor["reference_encoded_pt"],
                 ref_mask=obs_tensor["reference_attention_mask_pt"],
+                model_fn="ref" if self.reward.is_trainable else "reward"
             ).squeeze(-1)
         else:
             all_tokens = kwargs["all_tokens"]

@@ -36,7 +36,8 @@ class GAIL(PPO):
             self.optimizer, scheduler_args=self.cfg.get("scheduler", None)
         )
         (
-            self.agent,
+            self.agent.policy,
+            self.agent.reward,
             self.optimizer,
             self.reward_optimizer,
             self.dataloaders["val"],
@@ -44,7 +45,8 @@ class GAIL(PPO):
             self.prompt_loader,
             self.scheduler,
         ) = self.accelerator.prepare(
-            self.agent,
+            self.agent.policy,
+            self.agent.reward,
             self.optimizer,
             self.reward_optimizer,
             self.dataloaders["val"],
@@ -197,7 +199,7 @@ class GAIL(PPO):
                         # Compute Loss
                         loss = self.loss(chosen_scores, rejected_scores)
 
-                        self.accelerator.backward(loss)
+                        self.accelerator.backward(loss, model_fn="reward")
 
                         if self.accelerator.sync_gradients:
                             pbar.update(1)

@@ -24,3 +24,41 @@ imdb:
         lr: ${alg.optimizer_kwargs.lr}
         weight_decay: ${alg.optimizer_kwargs.weight_decay}
         eps: 1e-5
+
+tldr:
+  id: gail
+  build_reward: true
+  args:
+    batch_size: 32
+    grad_accumulation: 4
+    discrim_batch_size: ${alg.args.batch_size}
+    discrim_epochs: 1
+    num_warmup_iters: 5
+    warm_up_discrim_epoch: 1
+    loss_type: cross-entropy
+    default_loss_formulation: true
+    include_preferences: false
+    preference_mixing: false  
+    beta: 0.2
+    lambda_1: 0.5
+    eval_every: 10
+    eval_zero_shot: true
+    save_every: 50
+
+  policy:
+    args:
+      quantize_model: True
+
+  reward_fn:
+    id: adapter_reward
+    args:
+      adapter_id: jdchang/tldr_rm_adapter
+      reward_tokenizer_id: EleutherAI/gpt-j-6B
+      is_trainable: True
+      create_reference: True
+    optimizer:
+      id: adamw
+      args:
+        lr: ${alg.optimizer.args.lr}
+        weight_decay: ${alg.optimizer.args.weight_decay}
+        eps: 1e-5

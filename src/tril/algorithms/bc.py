@@ -39,7 +39,7 @@ class BC(BaseSupervised):
                 progress_so_far = epoch_idx + (step / len(self.train_dataloader))
 
                 # Train
-                self.agent.train(True)
+                self.agent.train()
                 with self.accelerator.accumulate(self.agent):
                     loss = self.compute_loss(batch)
                     self.accelerator.backward(loss)
