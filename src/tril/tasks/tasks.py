@@ -76,8 +76,8 @@ class TLDR(BaseTask):
         split: str,
         tokenizer_id: str,
         max_prompt_length: int,
-        n_samples: Dict[str, int] = {"train": 100, "valid": 100},
-        #n_samples: Dict[str, int] = {"valid": 100, "test": 500},
+        #n_samples: Dict[str, int] = {"train": 100, "valid": 100},
+        n_samples: Dict[str, int] = {"valid": 100, "test": 500},
         #n_samples: Dict[str, int] = {"train": 1000, "valid": 100, "test": 500},
     ):
         tokenizer = AutoTokenizer.from_pretrained(

@@ -88,7 +88,7 @@ tldr:
     seed: 0
     grad_accumulation: 2
     batch_size_per_process: 2
-    n_epochs: 5
+    n_epochs: 1
     eval_batch_size: 32
     eval_every: 500
     save_every: 500 #TODO
