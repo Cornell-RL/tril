@@ -51,7 +51,6 @@ class BC(BaseSupervised):
 
                     if self.accelerator.sync_gradients:
                         # TODO: if we want gradient clipping add here
-                        pbar.update(1)
                         pbar.set_description(
                             f"Epoch: {progress_so_far:.2f} | Training loss: {loss.item():.4f}"  # noqa
                         )
@@ -78,3 +77,4 @@ class BC(BaseSupervised):
                             self.agent.policy, self.accelerator, step
                         )
                 step += 1
+                pbar.update(1)

@@ -3,11 +3,13 @@
 task:
   id: tldr
   args:
-    tokenizer_id: gpt2-xl
+    #tokenizer_id: gpt2-xl
+    tokenizer_id: EleutherAI/gpt-j-6b
+    #tokenizer_id: EleutherAI/pythia-1.4b
     max_prompt_length: 500
 
 sampling:
-  batch_size_per_process: 32
+  batch_size_per_process: 4
   max_prompt_len: 500
   max_gen_len: 50
   prompt_padding_side: left

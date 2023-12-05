@@ -16,10 +16,12 @@ imdb:
     save_checkpoints: false #TODO
     eval_splits: ['val']
 
-  optimizer_kwargs:
-    lr: 1e-5
-    weight_decay: 1e-6
-    eps: 1e-5
+  optimizer:
+    id: adamw
+    args:
+      lr: 1e-5
+      weight_decay: 1e-6
+      eps: 1e-5
 
   tokenizer:
     model_name: lvwerra/gpt2-imdb
@@ -54,10 +56,12 @@ commongen:
     save_checkpoints: false #TODO
     eval_splits: ['val']
 
-  optimizer_kwargs:
-    lr: 1e-5
-    weight_decay: 1e-6
-    eps: 1e-5
+  optimizer:
+    id: adamw
+    args:
+      lr: 1e-5
+      weight_decay: 1e-6
+      eps: 1e-5
 
   tokenizer:
     model_name: t5-base
@@ -82,23 +86,30 @@ tldr:
 
   args:
     seed: 0
-    grad_accumulation: 4
+    grad_accumulation: 2
     batch_size_per_process: 2
-    n_epochs: 10
-    eval_batch_size: 100 
+    n_epochs: 5
+    eval_batch_size: 32
     eval_every: 500
     save_every: 500 #TODO
     eval_zero_shot: false
-    save_checkpoints: false #TODO
-    eval_splits: ['val']
+    save_checkpoints: true #TODO
+    #eval_splits: ['val']
+    eval_splits: ['test']
 
-  optimizer_kwargs:
-    lr: 1e-5
-    weight_decay: 1e-6
-    eps: 1e-5
+  optimizer:
+    id: adamw
+    args:
+      lr: 1e-5
+      weight_decay: 1e-6
+      eps: 1e-5
 
   tokenizer:
-    model_name: gpt2
+    #model_name: gpt2
+    #model_name: gpt2-xl
+    #model_name: EleutherAI/pythia-1.4b
+    #model_name: EleutherAI/gpt-neo-1.3B
+    model_name: EleutherAI/gpt-j-6b
     padding_side: left
     truncation_side: right 
     pad_token_as_eos_token: True 
@@ -108,17 +119,23 @@ tldr:
     args:
       model_type: causal
       model_name: CarperAI/openai_summarize_tldr_sft
+      #model_name: /home/jdc396/tril/outputs/gptj-lora/2023-12-02_10-36-05/model_11500
+      #model_name: gpt2-xl
+      #model_name: EleutherAI/pythia-1.4b
+      #model_name: EleutherAI/gpt-neo-1.3B
+      #model_name: EleutherAI/gpt-j-6b
       max_prompt_len: ${sampling.max_prompt_len}
       max_gen_len: ${sampling.max_gen_len}
       create_reference: False
       mlp_head: False
+      #quantize_model: False
       quantize_model: True
       gen_kwargs: ${sampling.train_generation_kwargs}
       prompt_truncation_side: ${sampling.prompt_truncation_side}
 
-  lora:
-    peft_config:
-      r: 8
-      lora_alpha: 64
-      lora_dropout: 0.1
-      task_type: CAUSAL_LM
+      lora:
+        peft_config:
+          r: 16
+          lora_alpha: 32
+          lora_dropout: 0.05
+          task_type: CAUSAL_LM

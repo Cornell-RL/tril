@@ -4,10 +4,12 @@ task:
   id: tldr
   args:
     tokenizer_id: gpt2
+    #tokenizer_id: gpt2-xl
     max_prompt_length: 500
 
 sampling:
   batch_size_per_process: 32
+  #batch_size_per_process: 64
   max_prompt_len: 500
   max_gen_len: 50
   prompt_padding_side: left
@@ -25,13 +27,17 @@ reward_fn:
   id: adapter_reward
   args:
     adapter_id: jdchang/tldr_rm_adapter
+    #adapter_id: 16_rm_adapter_checkpoint
     reward_tokenizer_id: EleutherAI/gpt-j-6B
+    #reward_tokenizer_id: gpt2-xl
 
 eval_metrics:
   - id: rm_model
     args: 
       tokenizer_id: EleutherAI/gpt-j-6B
+      #tokenizer_id: gpt2-xl
       batch_size: 5
+      #batch_size: 32
   - id: rouge
     args:
       use_single_ref: True # note there is only 1 ref

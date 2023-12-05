@@ -1,6 +1,9 @@
 outputs/
 output/
 cache/
+calibrations/
+adapters/
+reward_training/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

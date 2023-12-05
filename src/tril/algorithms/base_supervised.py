@@ -83,6 +83,7 @@ class BaseSupervised(BaseAlgorithm):
 
     def _prepare_deepspeed(self):
         self.optimizer = self.agent.setup_optimizer()
+        #import pdb; pdb.set_trace()
         (
             self.agent,
             self.optimizer,

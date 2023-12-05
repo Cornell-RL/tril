@@ -18,7 +18,8 @@ from tril.utils.logit_processors import RollinProcessor
 from tril.utils.policy import AUTOMODEL_CLASS, ActorOutput, GenerationOutput, ModelType
 
 
-class LMActor(nn.Module, PyTorchModelHubMixin):
+#class LMActor(nn.Module, PyTorchModelHubMixin):
+class LMActor(nn.Module):
     def __init__(
         self,
         model_type: str,
@@ -63,13 +64,15 @@ class LMActor(nn.Module, PyTorchModelHubMixin):
         if model is None:
             self.model = AUTOMODEL_CLASS[model_type].from_pretrained(
                 model_name,
-                quantization_config=quantization_config,
+                #quantization_config=quantization_config,
             )
+            #self.model.config.pad_token_id = self.tokenizer.pad_token_id # pad token to special token
+            self.model.resize_token_embeddings(len(self.tokenizer)) # resize embeddings for pad token
             self.model.__class__ = override_generation_routines(type(self.model))
             if self.peft_config is not None:
-                self.model = prepare_model_for_kbit_training(
-                    self.model, use_gradient_checkpointing=False
-                )  # TODO: flag for gradient checkpointing
+                #self.model = prepare_model_for_kbit_training(
+                #    self.model, use_gradient_checkpointing=False
+                #)
                 self.model = get_peft_model(
                     self.model, self.peft_config, self.policy_adapter_name
                 )
@@ -321,6 +324,7 @@ class LMActor(nn.Module, PyTorchModelHubMixin):
                 return_dict_in_generate=True,
                 output_scores=True,
                 synced_gpus=False,
+                #synced_gpus=True,
                 logits_processor=logits_processor,
                 pad_token_id=self.tokenizer.eos_token_id
                 if self.model_type == ModelType.CAUSAL
@@ -396,6 +400,7 @@ class LMActor(nn.Module, PyTorchModelHubMixin):
             output_scores=True,
             use_cache=True,
             synced_gpus=False,
+            #synced_gpus=True,
             pad_token_id=tokenizer.eos_token_id
             if self.model_type == ModelType.CAUSAL
             else tokenizer.pad_token_id,

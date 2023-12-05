@@ -76,7 +76,9 @@ class TLDR(BaseTask):
         split: str,
         tokenizer_id: str,
         max_prompt_length: int,
-        n_samples: Dict[str, int] = {"valid": 100, "test": 500},
+        n_samples: Dict[str, int] = {"train": 100, "valid": 100},
+        #n_samples: Dict[str, int] = {"valid": 100, "test": 500},
+        #n_samples: Dict[str, int] = {"train": 1000, "valid": 100, "test": 500},
     ):
         tokenizer = AutoTokenizer.from_pretrained(
             tokenizer_id
@@ -86,19 +88,33 @@ class TLDR(BaseTask):
         tokenizer.truncation_side = "right"
 
         def process_prompts(example, idxs):
+            """
+            Formatting:
+            SUBREDDIT: <r/...>
+            \n\n
+            TITLE: <title>
+            \n\n
+            POST: <post>
+            \n\n
+            TL;DR:
+            """
             prompt = example["prompt"]
+            prompt = ["\n\nTITLE:".join(p.split("\nTITLE:")) for p in prompt]
+            prompt = ["\n\nPOST:".join(p.split("\nPOST:")) for p in prompt]
             processed_prompt = [p.split("TL;DR:")[0] for p in prompt]
             tmp = tokenizer.batch_decode(
                 tokenizer(
                     processed_prompt,
                     truncation=True,
                     max_length=max_prompt_length
-                    - 5,  # to make sure "TL;DR" dont get truncated
+                    #- 5,  # to make sure "TL;DR" dont get truncated
+                    - 7,  # to make sure "TL;DR" dont get truncated
                     add_special_tokens=False,
                 )["input_ids"],
                 skip_special_tokens=True,
             )
-            tmp = [t.strip() + "\nTL;DR:" for t in tmp]
+            #tmp = [t.strip() + "\nTL;DR:" for t in tmp]
+            tmp = [t.strip() + "\n\nTL;DR: " for t in tmp]
             tmp = tokenizer.batch_decode(
                 tokenizer(
                     tmp,
@@ -108,7 +124,7 @@ class TLDR(BaseTask):
                 )["input_ids"],
                 skip_special_tokens=True,
             )
-            tmp = [t.strip() for t in tmp]
+            #tmp = [t.strip() for t in tmp]
             return {"id": idxs, "prompt": tmp, "label": example["label"]}
 
         ds = load_dataset("CarperAI/openai_summarize_tldr")

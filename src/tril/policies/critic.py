@@ -10,6 +10,7 @@ from transformers import BitsAndBytesConfig, PreTrainedTokenizer
 from tril.utils.generation_mixin import override_generation_routines
 from tril.utils.policy import AUTOMODEL_CLASS, CriticOutput, ModelType
 
+import deepspeed
 
 class LMCritic(nn.Module, PyTorchModelHubMixin):
     def __init__(
@@ -62,6 +63,8 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
             self.model = model
             if self.peft_config is not None:
                 self.model.add_adapter(self.value_adapter_name, self.peft_config)
+                # FOR NOW TRYING: load with reward
+                #self.model.load_adapter("16_rm_adapter_checkpoint", self.value_adapter_name)
 
         hidden_size = self.model.config.hidden_size
         if mlp_head:
@@ -75,6 +78,8 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
 
         if quantize_model:
             self.score = self.score.half()
+        deepspeed.zero.register_external_parameter(self, self.score.weight)
+        deepspeed.zero.register_external_parameter(self, self.score.bias)
 
     def get_parameters(self):
         if self.peft_config is not None:
@@ -173,7 +178,6 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
                 "decoder_inputs_embeds": decode_embeds,
                 "use_cache": True,
             }
-
         outputs = accelerator.unwrap_model(self.model).forward(
             **model_inputs,
             output_hidden_states=True,

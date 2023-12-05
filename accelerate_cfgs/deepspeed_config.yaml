@@ -2,7 +2,9 @@ command_file: null
 commands: null
 compute_environment: LOCAL_MACHINE
 deepspeed_config:
+  #deepspeed_config_file: accelerate_cfgs/zero_stage_3_config.json
   deepspeed_config_file: accelerate_cfgs/zero_stage_2_config.json
+  #zero3_init_flag: true
   zero3_init_flag: false
 distributed_type: DEEPSPEED
 downcast_bf16: 'no'

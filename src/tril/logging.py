@@ -214,8 +214,8 @@ class Tracker:
     def save_auto_model(self, policy, accelerator, iteration):
         if accelerator.is_main_process:
             save_path = os.path.join(self._run_path, f"model_{iteration}")
-            unwrapped_model = accelerator.unwrap_model(policy._policy_model)
-            unwrapped_model.save_pretrained(save_path, save_function=accelerator.save)
+            unwrapped_model = accelerator.unwrap_model(policy.model)
+            unwrapped_model.save_pretrained(save_path, save_function=accelerator.save, safe_serialization=False)
 
     @property
     def checkpoint_base_path(self):

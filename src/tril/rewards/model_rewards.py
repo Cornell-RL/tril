@@ -132,6 +132,10 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
             self.score = nn.Linear(hidden_dim, 1).to(dtype=self.model.dtype)
 
         self.reward_tokenizer = AutoTokenizer.from_pretrained(reward_tokenizer_id)
+        #self.reward_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        #self.reward_tokenizer.padding_side = "right"
+        #self.reward_tokenizer.truncation_side = "left" # focus on the generations
+
         self.reward_tokenizer.pad_token = (
             self.reward_tokenizer.eos_token
         )  # TODO: properly build tokenizer
@@ -218,6 +222,9 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
             samples = [
                 "<|startoftext|>" + sample + "<|endoftext|>" for sample in samples
             ]
+            #samples = [
+            #    sample + self.reward_tokenizer.eos_token for sample in samples
+            #]
             encodings = self.reward_tokenizer(
                 samples,
                 truncation=True,
@@ -269,6 +276,10 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
                 samples = [
                     "<|startoftext|>" + sample + "<|endoftext|>" for sample in samples
                 ]  # TODO: make template more general
+                #samples = [
+                #    sample + self.reward_tokenizer.eos_token for sample in samples
+                #]  # TODO: make template more general
+
                 encodings = self.reward_tokenizer(
                     samples,
                     truncation=True,
@@ -313,7 +324,8 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
 
             # Norm rewards with ref scores
             rewards = rewards - ref_rewards
-
+        #TODO: normalize_rewards here
+        #rewards = (rewards - 2.34999) / (1.118213)
         return rewards
 
     def forward(

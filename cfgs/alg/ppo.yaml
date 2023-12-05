@@ -147,8 +147,11 @@ tldr:
     verbose: 0
     n_iters: 1000
     batch_size: 32
+    #batch_size: 128
     grad_accumulation: 4
+    #grad_accumulation: 2
     trajectories_per_update: 128
+    #trajectories_per_update: 512
     n_epochs: 4
     gamma: 1.0
     gae_lambda: 0.95
@@ -187,6 +190,7 @@ tldr:
 
   tokenizer:
     model_name: gpt2
+    #model_name: gpt2-xl
     padding_side: left
     truncation_side: right 
     pad_token_as_eos_token: True 
@@ -196,6 +200,7 @@ tldr:
     args:
       model_type: causal
       model_name: CarperAI/openai_summarize_tldr_sft
+      #model_name: "/home/jdc396/tril/outputs/pretrain_gptxl_reformat/2023-11-21_15-50-01/model_2000"
       max_prompt_len: ${sampling.max_prompt_len}
       max_gen_len: ${sampling.max_gen_len}
       create_reference: True
@@ -210,3 +215,8 @@ tldr:
       lora_alpha: 64
       lora_dropout: 0.1
       task_type: CAUSAL_LM
+    #peft_config:
+    #  r: 16
+    #  lora_alpha: 32
+    #  lora_dropout: 0.05
+    #  task_type: CAUSAL_LM

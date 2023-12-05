@@ -16,9 +16,8 @@
         "reduce_bucket_size": 5e8,
         "round_robin_gradients": true
     },
-    "train_batch_size": "auto",
-    "train_micro_batch_size_per_gpu": "auto",
-    "gradient_accumulation_steps": 1,
+    "train_micro_batch_size_per_gpu": 2,
+    "gradient_accumulation_steps": 2,
     "gradient_clipping": "auto",
     "wall_clock_breakdown": false
 }

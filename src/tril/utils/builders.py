@@ -24,7 +24,8 @@ def build_tokenizer(tokenizer_config: Dict[str, Any]):
     if tokenizer.pad_token is None and tokenizer_config.get(
         "pad_token_as_eos_token", True
     ):
-        tokenizer.pad_token = tokenizer.eos_token
+        #tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     tokenizer.padding_side = tokenizer_config.get("padding_side", "left")
     tokenizer.truncation_side = tokenizer_config.get("truncation_side", "left")
     return tokenizer
