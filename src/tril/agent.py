@@ -221,8 +221,8 @@ class Agent(nn.Module):
         }
         if scheduler_args is None or scheduler_args["id"] == "constant":
             lr_lambda = partial(warmup, num_warmup_steps=100)
-            #return LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0)  # Constant
-            return LambdaLR(optimizer, lr_lambda=lr_lambda)  # Constant with warmup
+            return LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0)  # Constant
+            #return LambdaLR(optimizer, lr_lambda=lr_lambda)  # Constant with warmup
         decay_schedule_cls = types.get(
             scheduler_args["id"], "linear"
         )  # default to linear
