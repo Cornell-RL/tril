@@ -146,18 +146,21 @@ tldr:
     seed: 0
     verbose: 0
     n_iters: 1000
-    batch_size: 32
-    #batch_size: 128
-    grad_accumulation: 4
-    #grad_accumulation: 2
-    trajectories_per_update: 128
-    #trajectories_per_update: 512
+    #batch_size: 32
+    batch_size: 128
+    grad_accumulation: 16
+    #grad_accumulation: 4
+    #trajectories_per_update: 128
+    trajectories_per_update: 512
+    #n_epochs: 4
     n_epochs: 4
     gamma: 1.0
     gae_lambda: 0.95
     vf_coef: 0.1
     ent_coef: 0.0
-    target_coef: 0.1
+    #target_coef: 0.1
+    target_coef: 0.0
+    #target_regularization: False
     target_regularization: True
     clip_range: 0.2
     clip_range_vf: 0.2
@@ -166,7 +169,8 @@ tldr:
     eval_batch_size: 5
     eval_every: 10
     save_every: 100
-    eval_zero_shot: false
+    #eval_zero_shot: false
+    eval_zero_shot: true
     save_checkpoints: false
     eval_splits: ['val']
     max_prompt_len: ${sampling.max_prompt_len}
@@ -175,21 +179,26 @@ tldr:
   kl_div:
     kl_type: 'fixedklcontroller'
     kl_lr: .01
-    coeff: 0.002
+    #coeff: 0.002
+    coeff: 0.001
     target_kl: 0.1 
 
   optimizer:
-    id: adamw
+    #id: adamw
+    id: adam
     args:
       lr: 5e-6
-      weight_decay: 0.01
+      #weight_decay: 0.01
+      weight_decay: 0.0
       eps: 1e-5
 
   scheduler:
     id: constant
 
   tokenizer:
-    model_name: gpt2
+    #model_name: gpt2
+    model_name: "EleutherAI/gpt-j-6b"
+    #model_name: mistralai/Mistral-7B-v0.1
     #model_name: gpt2-xl
     padding_side: left
     truncation_side: right 
@@ -199,7 +208,9 @@ tldr:
     id: actor_critic
     args:
       model_type: causal
-      model_name: CarperAI/openai_summarize_tldr_sft
+      #model_name: CarperAI/openai_summarize_tldr_sft
+      model_name: "/home/jdc396/tril/outputs/base_train_warmup_128/2023-12-06_22-20-57/model_14500"
+      #model_name: mistralai/Mistral-7B-v0.1
       #model_name: "/home/jdc396/tril/outputs/pretrain_gptxl_reformat/2023-11-21_15-50-01/model_2000"
       max_prompt_len: ${sampling.max_prompt_len}
       max_gen_len: ${sampling.max_gen_len}
@@ -210,13 +221,13 @@ tldr:
       prompt_truncation_side: ${sampling.prompt_truncation_side}
 
   lora:
-    peft_config:
-      r: 8
-      lora_alpha: 64
-      lora_dropout: 0.1
-      task_type: CAUSAL_LM
     #peft_config:
-    #  r: 16
-    #  lora_alpha: 32
-    #  lora_dropout: 0.05
+    #  r: 8
+    #  lora_alpha: 64
+    #  lora_dropout: 0.1
     #  task_type: CAUSAL_LM
+    peft_config:
+      r: 16
+      lora_alpha: 32
+      lora_dropout: 0.05
+      task_type: CAUSAL_LM

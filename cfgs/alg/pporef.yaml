@@ -1,0 +1,21 @@
+defaults:
+  - ppo
+  - _self_
+
+alg_id: pporef
+
+tldr:
+  id: pporef
+
+  policy:
+    id: multi_actor_critic
+    args:
+      guide_model_name: "/home/jdc396/tril/outputs/base_train_warmup_128/2023-12-06_22-20-57/model_14500"
+      alg_type: 'ppo_pp'
+      beta: 1.0
+      guide_gen_kwargs:
+        do_sample: True
+        top_k: 0
+        min_length: 5
+        max_new_tokens: 20
+        top_p: 0.92

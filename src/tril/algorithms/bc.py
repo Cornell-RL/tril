@@ -44,6 +44,7 @@ class BC(BaseSupervised):
                     loss = self.compute_loss(batch)
                     self.accelerator.backward(loss)
                     self.optimizer.step()
+                    self.scheduler.step()
                     self.optimizer.zero_grad()
 
                     # Log

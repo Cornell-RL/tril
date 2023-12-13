@@ -5,12 +5,14 @@ from tril.algorithms.gail import GAIL
 from tril.algorithms.lols import LOLS
 from tril.algorithms.ppo import PPO
 from tril.algorithms.ppo_pp import PPO_PP
+from tril.algorithms.ppo_ref import PPOReference
 
 
 class AlgorithmRegistry:
     _registry = {
         "ppo": PPO,
         "ppo_pp": PPO_PP,
+        "pporef": PPOReference,
         "aggrevated": AGGREVATED,
         "lols": LOLS,
         "d2lols": D2LOLS,

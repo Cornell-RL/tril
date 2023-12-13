@@ -5,6 +5,7 @@ import torch.nn as nn
 from accelerate import Accelerator
 from omegaconf import DictConfig, OmegaConf
 from peft import LoraConfig
+from functools import partial
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import (
     CosineAnnealingLR,
@@ -208,6 +209,10 @@ class Agent(nn.Module):
         self, optimizer: Optimizer, scheduler_args: Optional[Dict[str, Any]] = None
     ) -> LRScheduler:
         """Instantiates LR Schedulers."""
+        def warmup(current_step, *, num_warmup_steps):
+            if current_step < num_warmup_steps:
+                return float(current_step) / float(max(1.0, num_warmup_steps))
+            return 1.0
 
         # TODO: add WARMUP stage for LR
         types = {
@@ -215,7 +220,9 @@ class Agent(nn.Module):
             "cosine": CosineAnnealingLR,
         }
         if scheduler_args is None or scheduler_args["id"] == "constant":
-            return LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0)  # Constant
+            lr_lambda = partial(warmup, num_warmup_steps=100)
+            #return LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0)  # Constant
+            return LambdaLR(optimizer, lr_lambda=lr_lambda)  # Constant with warmup
         decay_schedule_cls = types.get(
             scheduler_args["id"], "linear"
         )  # default to linear

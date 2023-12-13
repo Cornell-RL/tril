@@ -83,16 +83,21 @@ class BaseSupervised(BaseAlgorithm):
 
     def _prepare_deepspeed(self):
         self.optimizer = self.agent.setup_optimizer()
+        self.scheduler = self.agent.create_scheduler(
+            self.optimizer, scheduler_args=self.alg_cfg.get("scheduler", None)
+        )
         #import pdb; pdb.set_trace()
         (
             self.agent,
             self.optimizer,
+            self.scheduler,
             self.train_dataloader,
             self.dataloaders["val"],
             self.dataloaders["test"],
         ) = self.accelerator.prepare(
             self.agent,
             self.optimizer,
+            self.scheduler,
             self.dataloaders["train"],
             self.dataloaders["val"],
             self.dataloaders["test"],

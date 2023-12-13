@@ -132,13 +132,13 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
             self.score = nn.Linear(hidden_dim, 1).to(dtype=self.model.dtype)
 
         self.reward_tokenizer = AutoTokenizer.from_pretrained(reward_tokenizer_id)
-        #self.reward_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-        #self.reward_tokenizer.padding_side = "right"
-        #self.reward_tokenizer.truncation_side = "left" # focus on the generations
+        self.reward_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        self.reward_tokenizer.padding_side = "right"
+        self.reward_tokenizer.truncation_side = "left" # focus on the generations
 
-        self.reward_tokenizer.pad_token = (
-            self.reward_tokenizer.eos_token
-        )  # TODO: properly build tokenizer
+        #self.reward_tokenizer.pad_token = (
+        #    self.reward_tokenizer.eos_token
+        #)  # TODO: properly build tokenizer
 
     def set_training_mode(self, mode: bool) -> None:
         self.train(mode)
@@ -219,12 +219,12 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
         # Retokenize:
         if retokenize:
             samples = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
-            samples = [
-                "<|startoftext|>" + sample + "<|endoftext|>" for sample in samples
-            ]
             #samples = [
-            #    sample + self.reward_tokenizer.eos_token for sample in samples
+            #    "<|startoftext|>" + sample + "<|endoftext|>" for sample in samples
             #]
+            samples = [
+                sample + self.reward_tokenizer.eos_token for sample in samples
+            ]
             encodings = self.reward_tokenizer(
                 samples,
                 truncation=True,
@@ -326,6 +326,7 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
             rewards = rewards - ref_rewards
         #TODO: normalize_rewards here
         #rewards = (rewards - 2.34999) / (1.118213)
+        rewards = rewards - 1.0151850357063181
         return rewards
 
     def forward(

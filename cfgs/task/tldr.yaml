@@ -3,7 +3,9 @@
 task:
   id: tldr
   args:
-    tokenizer_id: gpt2
+    #tokenizer_id: gpt2
+    tokenizer_id: EleutherAI/gpt-j-6B
+    #tokenizer_id: mistralai/Mistral-7B-v0.1
     #tokenizer_id: gpt2-xl
     max_prompt_length: 500
 
@@ -20,13 +22,16 @@ sampling:
     do_sample: True
     max_new_tokens: ${sampling.max_gen_len}
   eval_generation_kwargs:
-    do_sample: False
+    #do_sample: False
+    do_sample: True
+    top_p: 0.92
     max_new_tokens: ${sampling.max_gen_len}
 
 reward_fn:
   id: adapter_reward
   args:
-    adapter_id: jdchang/tldr_rm_adapter
+    #adapter_id: jdchang/tldr_rm_adapter
+    adapter_id: 16_gptj_process
     #adapter_id: 16_rm_adapter_checkpoint
     reward_tokenizer_id: EleutherAI/gpt-j-6B
     #reward_tokenizer_id: gpt2-xl

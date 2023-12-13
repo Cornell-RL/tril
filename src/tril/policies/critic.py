@@ -5,7 +5,9 @@ import torch.nn as nn
 from accelerate import Accelerator
 from huggingface_hub import PyTorchModelHubMixin
 from peft import LoraConfig, get_peft_model
+from peft.peft_model import set_peft_model_state_dict
 from transformers import BitsAndBytesConfig, PreTrainedTokenizer
+from pathlib import Path
 
 from tril.utils.generation_mixin import override_generation_routines
 from tril.utils.policy import AUTOMODEL_CLASS, CriticOutput, ModelType
@@ -64,7 +66,7 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
             if self.peft_config is not None:
                 self.model.add_adapter(self.value_adapter_name, self.peft_config)
                 # FOR NOW TRYING: load with reward
-                #self.model.load_adapter("16_rm_adapter_checkpoint", self.value_adapter_name)
+                #self.model.load_adapter("16_gptj_process", self.value_adapter_name, is_trainable=True)
 
         hidden_size = self.model.config.hidden_size
         if mlp_head:
@@ -76,10 +78,92 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
         else:
             self.score = nn.Linear(hidden_size, 1)
 
+
+        #adapter_state_dict = torch.load("16_gptj_process/adapter_model.bin", map_location="cpu")
+        #for score_name_candidate in ["score"]:
+        #    if any(
+        #        [score_name_candidate in name for name in adapter_state_dict.keys()]
+        #    ):
+        #        score_name = score_name_candidate
+        #        # we have found the correct head name and can break
+        #        break
+        #score_dict = {}
+        #copy_adapter_state_dict = adapter_state_dict.copy()
+
+        #for name, _ in copy_adapter_state_dict.items():
+        #    if score_name in name:
+        #        key_name = ".".join(name.split(".")[-1:])
+        #        score_dict[key_name] = adapter_state_dict.pop(name)
+        #num_labels, hidden_dim = score_dict["weight"].shape
+        #has_bias = any(["bias" in name for name in adapter_state_dict.keys()])
+
+        ## Add score layer
+        #self.score = nn.Linear(hidden_dim, num_labels, bias=has_bias).to(
+        #    dtype=self.model.dtype
+        #)
+        #self.score.load_state_dict(score_dict)
+
         if quantize_model:
             self.score = self.score.half()
+
+        #self.model.load_adapter("16_gptj_process", self.value_adapter_name, is_trainable=True)
+        #self.load_reward_adapter()
         deepspeed.zero.register_external_parameter(self, self.score.weight)
         deepspeed.zero.register_external_parameter(self, self.score.bias)
+
+    def load_reward_adapter(
+        self, adapter_model_id="16_gptj_process", token=None
+    ):
+        filename = Path(adapter_model_id) / "adapter_model.bin"
+
+        # If not local try Download
+        if not filename.exists():
+            try:
+                local_filename = hf_hub_download(
+                    adapter_model_id,
+                    "adapter_model.bin",
+                    token=token,
+                )
+            except:
+                raise ValueError("Adapter not found")
+        else:
+            local_filename = filename
+
+        adapter_state_dict = torch.load(local_filename, map_location="cpu")
+        rm_adapter_peft_config = LoraConfig.from_pretrained(adapter_model_id)
+
+        for score_name_candidate in ["score"]:
+            if any(
+                [score_name_candidate in name for name in adapter_state_dict.keys()]
+            ):
+                score_name = score_name_candidate
+                # we have found the correct head name and can break
+                break
+
+        score_dict = {}
+        copy_adapter_state_dict = adapter_state_dict.copy()
+
+        for name, _ in copy_adapter_state_dict.items():
+            if score_name in name:
+                key_name = ".".join(name.split(".")[-1:])
+                score_dict[key_name] = adapter_state_dict.pop(name)
+
+        self.model.add_adapter(self.value_adapter_name, rm_adapter_peft_config)
+        #self.rm_adapter_name = adapter_name
+
+        num_labels, hidden_dim = score_dict["weight"].shape
+        has_bias = any(["bias" in name for name in adapter_state_dict.keys()])
+
+        # Add score layer
+        self.score = nn.Linear(hidden_dim, num_labels, bias=has_bias).to(
+            dtype=self.model.dtype
+        )
+        self.score.load_state_dict(score_dict)
+
+        # load the adapter to the model
+        set_peft_model_state_dict(
+            self.model, adapter_state_dict, adapter_name=self.value_adapter_name
+        )
 
     def get_parameters(self):
         if self.peft_config is not None:

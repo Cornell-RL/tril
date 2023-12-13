@@ -86,7 +86,7 @@ tldr:
 
   args:
     seed: 0
-    grad_accumulation: 2
+    grad_accumulation: 16
     batch_size_per_process: 2
     n_epochs: 1
     eval_batch_size: 32
@@ -94,15 +94,18 @@ tldr:
     save_every: 500 #TODO
     eval_zero_shot: false
     save_checkpoints: true #TODO
-    #eval_splits: ['val']
-    eval_splits: ['test']
+    eval_splits: ['val']
+    #eval_splits: ['test']
 
   optimizer:
-    id: adamw
+    #id: adamw
+    id: adam
     args:
       lr: 1e-5
-      weight_decay: 1e-6
-      eps: 1e-5
+      weight_decay: 0.0
+      #weight_decay: 1e-6
+      eps: 1e-8
+      #eps: 1e-5
 
   tokenizer:
     #model_name: gpt2
@@ -110,6 +113,7 @@ tldr:
     #model_name: EleutherAI/pythia-1.4b
     #model_name: EleutherAI/gpt-neo-1.3B
     model_name: EleutherAI/gpt-j-6b
+    #model_name: mistralai/Mistral-7B-v0.1
     padding_side: left
     truncation_side: right 
     pad_token_as_eos_token: True 
@@ -118,12 +122,14 @@ tldr:
     id: actor
     args:
       model_type: causal
-      model_name: CarperAI/openai_summarize_tldr_sft
+      #model_name: CarperAI/openai_summarize_tldr_sft
+      #model_name: mistralai/Mistral-7B-v0.1
       #model_name: /home/jdc396/tril/outputs/gptj-lora/2023-12-02_10-36-05/model_11500
+      #model_name: /home/jdc396/tril/outputs/gptj-lora/chkpt_noquant_nolora/model_6000
       #model_name: gpt2-xl
       #model_name: EleutherAI/pythia-1.4b
       #model_name: EleutherAI/gpt-neo-1.3B
-      #model_name: EleutherAI/gpt-j-6b
+      model_name: EleutherAI/gpt-j-6b
       max_prompt_len: ${sampling.max_prompt_len}
       max_gen_len: ${sampling.max_gen_len}
       create_reference: False
@@ -132,7 +138,7 @@ tldr:
       quantize_model: True
       gen_kwargs: ${sampling.train_generation_kwargs}
       prompt_truncation_side: ${sampling.prompt_truncation_side}
-
+      
       lora:
         peft_config:
           r: 16

@@ -17,7 +17,7 @@
         "round_robin_gradients": true
     },
     "train_micro_batch_size_per_gpu": 2,
-    "gradient_accumulation_steps": 2,
+    "gradient_accumulation_steps": 16,
     "gradient_clipping": "auto",
     "wall_clock_breakdown": false
 }

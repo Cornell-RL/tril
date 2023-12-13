@@ -76,14 +76,16 @@ class TLDR(BaseTask):
         split: str,
         tokenizer_id: str,
         max_prompt_length: int,
+        #n_samples: Dict[str, int] = {"valid": 100},
         #n_samples: Dict[str, int] = {"train": 100, "valid": 100},
-        n_samples: Dict[str, int] = {"valid": 100, "test": 500},
+        n_samples: Dict[str, int] = {"valid": 1000, "test": 100},
         #n_samples: Dict[str, int] = {"train": 1000, "valid": 100, "test": 500},
     ):
         tokenizer = AutoTokenizer.from_pretrained(
             tokenizer_id
         )  # NOTE: truncation side | right, padding side | left
-        tokenizer.pad_token = tokenizer.eos_token
+        #tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         tokenizer.padding_side = "left"
         tokenizer.truncation_side = "right"
 
@@ -106,15 +108,13 @@ class TLDR(BaseTask):
                 tokenizer(
                     processed_prompt,
                     truncation=True,
-                    max_length=max_prompt_length
-                    #- 5,  # to make sure "TL;DR" dont get truncated
-                    - 7,  # to make sure "TL;DR" dont get truncated
+                    max_length=max_prompt_length - 7,  # to make sure "TL;DR" dont get truncated
                     add_special_tokens=False,
                 )["input_ids"],
                 skip_special_tokens=True,
             )
-            #tmp = [t.strip() + "\nTL;DR:" for t in tmp]
             tmp = [t.strip() + "\n\nTL;DR: " for t in tmp]
+            #tmp = [t.strip() + " TL;DR: " for t in tmp]
             tmp = tokenizer.batch_decode(
                 tokenizer(
                     tmp,

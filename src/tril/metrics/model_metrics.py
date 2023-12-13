@@ -25,7 +25,8 @@ class PreferenceRewardModelMetric(BaseMetric):
     ) -> None:
         super().__init__(accelerator, MetricType.DIST)
         self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_id)
-        self._tokenizer.pad_token = self._tokenizer.eos_token
+        #self._tokenizer.pad_token = self._tokenizer.eos_token
+        self._tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         self._batch_size = batch_size
 
     @property
@@ -53,11 +54,18 @@ class PreferenceRewardModelMetric(BaseMetric):
                 current_ix : current_ix + self._batch_size
             ]
             # NOTE: this is Summarization specific..... need to make more general
+            #batch_prompt_texts = [
+            #    text.split("TL;DR:")[0] + "TL;DR: " for text in batch_prompt_texts
+            #]
             batch_prompt_texts = [
-                text.split("TL;DR:")[0] + "TL;DR: " for text in batch_prompt_texts
+                text.split("TL;DR:")[0] for text in batch_prompt_texts
             ]
+            #input_text = [
+            #    "<|startoftext|>" + p + "\n" + gen + "<|endoftext|>"
+            #    for p, gen in zip(batch_prompt_texts, batch_gen_texts)
+            #]
             input_text = [
-                "<|startoftext|>" + p + "\n" + gen + "<|endoftext|>"
+                p + "\n\nTL;DR: " + gen + self._tokenizer.pad_token
                 for p, gen in zip(batch_prompt_texts, batch_gen_texts)
             ]
 

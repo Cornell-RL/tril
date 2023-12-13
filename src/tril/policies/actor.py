@@ -64,9 +64,9 @@ class LMActor(nn.Module):
         if model is None:
             self.model = AUTOMODEL_CLASS[model_type].from_pretrained(
                 model_name,
-                #quantization_config=quantization_config,
+                quantization_config=quantization_config,
             )
-            #self.model.config.pad_token_id = self.tokenizer.pad_token_id # pad token to special token
+            self.model.config.pad_token_id = self.tokenizer.pad_token_id # pad token to special token
             self.model.resize_token_embeddings(len(self.tokenizer)) # resize embeddings for pad token
             self.model.__class__ = override_generation_routines(type(self.model))
             if self.peft_config is not None:

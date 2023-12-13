@@ -6,7 +6,8 @@ defaults:
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
 
-experiment_name: gptj-lora
+    #experiment_name: ppo_ref
+experiment_name: mistral_supervised
     #experiment_name: test
 
 hydra:

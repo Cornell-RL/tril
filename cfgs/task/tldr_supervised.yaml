@@ -20,7 +20,10 @@ sampling:
     do_sample: True
     max_new_tokens: ${sampling.max_gen_len}
   eval_generation_kwargs:
-    do_sample: False
+    #do_sample: False
+    do_sample: True
+    #num_beams: 5
+    #top_p: 0.92
     max_new_tokens: ${sampling.max_gen_len}
 
 eval_metrics:

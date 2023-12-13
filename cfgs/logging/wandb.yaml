@@ -3,4 +3,5 @@
 log_to_wandb: true
 #log_to_wandb: false
 entity_name: coactivelearning
-project_name: gptj
+#project_name: gptj
+project_name: mistral_bc

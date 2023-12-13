@@ -197,7 +197,7 @@ class PPO(BaseOnPolicyAlgorithm):
                             policy_loss
                             + self.ent_coef * entropy_loss
                             + self.vf_coef * value_loss
-                            + self.target_coef * target_loss
+                            #+ self.target_coef * target_loss
                         )
 
                         if (
