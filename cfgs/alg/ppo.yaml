@@ -209,9 +209,10 @@ tldr:
     args:
       model_type: causal
       #model_name: CarperAI/openai_summarize_tldr_sft
-      model_name: "/home/jdc396/tril/outputs/base_train_warmup_128/2023-12-06_22-20-57/model_14500"
+      #model_name: "/home/jdc396/tril/outputs/base_train_warmup_128/2023-12-06_22-20-57/model_14500"
       #model_name: mistralai/Mistral-7B-v0.1
       #model_name: "/home/jdc396/tril/outputs/pretrain_gptxl_reformat/2023-11-21_15-50-01/model_2000"
+      model_name: jdchang/gptj_tldr_sft
       max_prompt_len: ${sampling.max_prompt_len}
       max_gen_len: ${sampling.max_gen_len}
       create_reference: True
