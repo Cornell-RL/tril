@@ -127,6 +127,10 @@ class Agent(nn.Module):
         params = list(self.policy.get_named_parameters())
         if self.lora_cfg is not None:
             params = [p for p in params if "reward_adapter" not in p[0]]
+            #for n, p in params:
+            #    #if self.policy.policy_adapter_name in n or "lm_head" in n:
+            #    if self.policy.policy_adapter_name in n:
+            #        p.requires_grad = True
         return params
 
     @property
@@ -192,6 +196,8 @@ class Agent(nn.Module):
             optimizer = optim_cls(grouped_params, **kwargs)
             return optimizer
 
+        #import pdb; pdb.set_trace()
+
         policy_optimizer = create_fn(
             self.policy_named_params, self.optimizer_cls, self.cfg.alg.optimizer.args
         )
@@ -214,6 +220,24 @@ class Agent(nn.Module):
                 return float(current_step) / float(max(1.0, num_warmup_steps))
             return 1.0
 
+        def warmup_with_decay(current_step, *, num_warmup_steps, num_decay_steps):
+            if current_step < num_warmup_steps:
+                return float(current_step) / float(max(1.0, num_warmup_steps))
+            else:
+            #if current_step >= num_warmup_steps:
+                return max(0.001, float(num_decay_steps - (current_step - num_warmup_steps))/float(num_decay_steps))
+            #return 1.0
+
+        def warmup_with_decay_lag(current_step, *, num_warmup_steps, num_decay_steps):
+            if current_step < num_warmup_steps:
+                return float(current_step) / float(max(1.0, num_warmup_steps))
+            elif current_step < num_warmup_steps + 100:
+                return 1.0
+            else:
+            #if current_step >= num_warmup_steps:
+                return max(0.001, float(num_decay_steps - (current_step - num_warmup_steps - 100))/float(num_decay_steps))
+            #return 1.0
+
         # TODO: add WARMUP stage for LR
         types = {
             "linear": PolynomialLR,
@@ -221,8 +245,10 @@ class Agent(nn.Module):
         }
         if scheduler_args is None or scheduler_args["id"] == "constant":
             lr_lambda = partial(warmup, num_warmup_steps=100)
-            return LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0)  # Constant
-            #return LambdaLR(optimizer, lr_lambda=lr_lambda)  # Constant with warmup
+            #lr_lambda = partial(warmup_with_decay, num_warmup_steps=100, num_decay_steps=1600)
+            #lr_lambda = partial(warmup_with_decay_lag, num_warmup_steps=100, num_decay_steps=1600)
+            #return LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0)  # Constant
+            return LambdaLR(optimizer, lr_lambda=lr_lambda)  # Constant with warmup
         decay_schedule_cls = types.get(
             scheduler_args["id"], "linear"
         )  # default to linear

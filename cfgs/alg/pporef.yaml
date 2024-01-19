@@ -7,12 +7,82 @@ alg_id: pporef
 tldr:
   id: pporef
 
+  args:
+    target_coef: 0.0
+    #target_coef: 0.1
+    eval_splits: ['val']
+
+  optimizer:
+    args:
+      #lr: 1e-5
+      lr: 5e-6
+
   policy:
     id: multi_actor_critic
     args:
       guide_model_name: "/home/jdc396/tril/outputs/base_train_warmup_128/2023-12-06_22-20-57/model_14500"
       alg_type: 'ppo_pp'
+      #beta: 0.2
       beta: 1.0
+      #beta: 0.6
+      guide_gen_kwargs:
+        do_sample: True
+        top_k: 0
+        min_length: 5
+        max_new_tokens: 20
+        top_p: 0.92
+
+tldr_preference_rl:
+  id: pporef
+
+  args:
+    target_coef: 0.0
+    #target_coef: 0.1
+    eval_splits: ['test']
+
+  optimizer:
+    args:
+      #lr: 1e-5
+      lr: 5e-6
+
+  policy:
+    id: multi_actor_critic
+    args:
+      #guide_model_name: "/home/jdc396/tril/outputs/base_train_warmup_128/2023-12-06_22-20-57/model_14500"
+      guide_model_name: jdchang/gptj_tldr_sft
+      alg_type: 'ppo_pp'
+      #beta: 0.2
+      beta: 1.0
+      #beta: 0.6
+      guide_gen_kwargs:
+        do_sample: True
+        top_k: 0
+        min_length: 5
+        max_new_tokens: 20
+        top_p: 0.92
+
+tldr_combined_rl:
+  id: pporef
+
+  args:
+    target_coef: 0.0
+    #target_coef: 0.1
+    eval_splits: ['test']
+
+  optimizer:
+    args:
+      #lr: 1e-5
+      lr: 5e-6
+
+  policy:
+    id: multi_actor_critic
+    args:
+      #guide_model_name: "/home/jdc396/tril/outputs/base_train_warmup_128/2023-12-06_22-20-57/model_14500"
+      guide_model_name: jdchang/gptj_tldr_sft
+      alg_type: 'ppo_pp'
+      #beta: 0.2
+      beta: 1.0
+      #beta: 0.6
       guide_gen_kwargs:
         do_sample: True
         top_k: 0

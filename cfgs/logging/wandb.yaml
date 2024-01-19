@@ -2,6 +2,8 @@
 
 log_to_wandb: true
 #log_to_wandb: false
-entity_name: coactivelearning
+#entity_name: coactivelearning
+entity_name: rollin_ref
 #project_name: gptj
-project_name: mistral_bc
+#project_name: mistral_bc
+project_name: gptj_ppo_ref_with_target

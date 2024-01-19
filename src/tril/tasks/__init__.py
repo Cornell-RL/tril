@@ -1,7 +1,7 @@
 from typing import Any, Dict, Type
 
 from tril.base_task import BaseTask
-from tril.tasks.tasks import IMDB, TLDR, CommonGen, IMDBForSeq2Seq, TLDRPreference
+from tril.tasks.tasks import IMDB, TLDR, CommonGen, IMDBForSeq2Seq, TLDRPreference, TLDRRLPreference, TLDRRLCombined
 
 
 class TaskRegistry:
@@ -11,6 +11,8 @@ class TaskRegistry:
         "imdb_seq2seq": IMDBForSeq2Seq,
         "tldr": TLDR,
         "tldr_preference": TLDRPreference,
+        "tldr_preference_rl": TLDRRLPreference,
+        "tldr_combined_rl": TLDRRLCombined,
     }
 
     @classmethod

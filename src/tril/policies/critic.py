@@ -66,7 +66,7 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
             if self.peft_config is not None:
                 self.model.add_adapter(self.value_adapter_name, self.peft_config)
                 # FOR NOW TRYING: load with reward
-                #self.model.load_adapter("16_gptj_process", self.value_adapter_name, is_trainable=True)
+                # self.model.load_adapter("16_gptj_process", self.value_adapter_name, is_trainable=True)
 
         hidden_size = self.model.config.hidden_size
         if mlp_head:
@@ -76,7 +76,7 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
                 nn.Linear(hidden_size * 2, 1),
             )
         else:
-            self.score = nn.Linear(hidden_size, 1)
+            self.score = nn.Linear(hidden_size, 1, bias=True)
 
 
         #adapter_state_dict = torch.load("16_gptj_process/adapter_model.bin", map_location="cpu")
@@ -97,14 +97,15 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
         #num_labels, hidden_dim = score_dict["weight"].shape
         #has_bias = any(["bias" in name for name in adapter_state_dict.keys()])
 
-        ## Add score layer
-        #self.score = nn.Linear(hidden_dim, num_labels, bias=has_bias).to(
+        ### Add score layer
+        #self.score = nn.Linear(hidden_dim, num_labels, bias=True).to(
         #    dtype=self.model.dtype
         #)
-        #self.score.load_state_dict(score_dict)
+        #self.score.load_state_dict(score_dict, strict=False)
+        #torch.nn.init.constant_(self.score.bias, 0.0)
 
-        if quantize_model:
-            self.score = self.score.half()
+        #if quantize_model:
+        #    self.score = self.score.half()
 
         #self.model.load_adapter("16_gptj_process", self.value_adapter_name, is_trainable=True)
         #self.load_reward_adapter()
@@ -168,6 +169,7 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
     def get_parameters(self):
         if self.peft_config is not None:
             params = []
+            #self.model.set_adapter(self.value_adapter_name)
             for name, param in self.named_parameters():
                 if self.value_adapter_name in name:
                     params.append(param)
@@ -181,6 +183,7 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
             # Since we are passing by reference, self.actor.parameters gets all params
             # TODO: we need to fix this when just using critic
             params = []
+            #self.model.set_adapter(self.value_adapter_name)
             for name, param in self.named_parameters():
                 if self.value_adapter_name in name:
                     params.append((name, param))

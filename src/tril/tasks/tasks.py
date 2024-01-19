@@ -1,4 +1,5 @@
 from typing import Dict
+import numpy as np
 
 from datasets import load_dataset
 from tqdm import tqdm
@@ -162,6 +163,333 @@ class TLDR(BaseTask):
             split_name = "train"
         elif split == "val":
             split_name = "valid"
+        elif split == "test":
+            split_name = "test"
+        else:
+            raise NotImplementedError
+        return split_name
+
+class TLDRRLCombined(BaseTask):
+    @classmethod
+    def prepare(
+        cls,
+        split: str,
+        tokenizer_id: str,
+        max_prompt_length: int,
+        #n_samples: Dict[str, int] = {"valid": 100},
+        #n_samples: Dict[str, int] = {"train": 100, "valid": 100},
+        n_samples: Dict[str, int] = {"valid": 1000, "test": 1000},
+        #n_samples: Dict[str, int] = {"train": 1000, "valid": 100, "test": 500},
+        reference_type: str = "chosen",
+    ):
+        rng = np.random.default_rng()
+        tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer_id
+        )  # NOTE: truncation side | right, padding side | left
+        #tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        tokenizer.padding_side = "left"
+        tokenizer.truncation_side = "right"
+
+        def process_comparison_prompts(example, idxs):
+            """
+            Formatting:
+            SUBREDDIT: <r/...>
+            \n\n
+            TITLE: <title>
+            \n\n
+            POST: <post>
+            \n\n
+            TL;DR:
+            """
+            prompt = example["prompt"]
+            prompt = ["\n\nTITLE:".join(p.split("\nTITLE:")) for p in prompt]
+            processed_prompt = ["\n\nPOST:".join(p.split("\nPOST:")) for p in prompt]
+            #processed_prompt = [p.split("TL;DR:")[0] for p in prompt]
+            tmp = tokenizer.batch_decode(
+                tokenizer(
+                    processed_prompt,
+                    truncation=True,
+                    max_length=max_prompt_length - 7,  # to make sure "TL;DR" dont get truncated
+                    add_special_tokens=False,
+                )["input_ids"],
+                skip_special_tokens=True,
+            )
+            tmp = [t.strip() + "\n\nTL;DR: " for t in tmp]
+            #tmp = [t.strip() + " TL;DR: " for t in tmp]
+            tmp = tokenizer.batch_decode(
+                tokenizer(
+                    tmp,
+                    truncation=True,
+                    max_length=max_prompt_length,
+                    add_special_tokens=False,
+                )["input_ids"],
+                skip_special_tokens=True,
+            )
+            #tmp = [t.strip() for t in tmp]
+            if reference_type == "chosen":
+                label = example["chosen"]
+            elif reference_type == "rejected":
+                label = example["rejected"]
+            else:
+                key = rng.choice(["chosen", "rejected"])
+                label = example[key]
+            processed_label = [l.split("TL;DR: ")[1].lstrip() for l in label]
+            return {"id": idxs, "prompt": tmp, "label": processed_label}
+            #return {"id": idxs, "prompt": tmp, "label": example["label"]}
+
+        def process_demonstration_prompts(example, idxs):
+            """
+            Formatting:
+            SUBREDDIT: <r/...>
+            \n\n
+            TITLE: <title>
+            \n\n
+            POST: <post>
+            \n\n
+            TL;DR:
+            """
+            prompt = example["prompt"]
+            prompt = ["\n\nTITLE:".join(p.split("\nTITLE:")) for p in prompt]
+            prompt = ["\n\nPOST:".join(p.split("\nPOST:")) for p in prompt]
+            processed_prompt = [p.split("TL;DR:")[0] for p in prompt]
+            tmp = tokenizer.batch_decode(
+                tokenizer(
+                    processed_prompt,
+                    truncation=True,
+                    max_length=max_prompt_length - 7,  # to make sure "TL;DR" dont get truncated
+                    add_special_tokens=False,
+                )["input_ids"],
+                skip_special_tokens=True,
+            )
+            tmp = [t.strip() + "\n\nTL;DR: " for t in tmp]
+            #tmp = [t.strip() + " TL;DR: " for t in tmp]
+            tmp = tokenizer.batch_decode(
+                tokenizer(
+                    tmp,
+                    truncation=True,
+                    max_length=max_prompt_length,
+                    add_special_tokens=False,
+                )["input_ids"],
+                skip_special_tokens=True,
+            )
+            #tmp = [t.strip() for t in tmp]
+            return {"id": idxs, "prompt": tmp, "label": example["label"]}
+
+        #ds = load_dataset("CarperAI/openai_summarize_tldr")
+        #split_name = TLDR.gen_split_name(split)
+        comparison_ds = load_dataset("CarperAI/openai_summarize_comparisons")
+        demonstration_ds = load_dataset("CarperAI/openai_summarize_tldr")
+        split_name = TLDRPreference.gen_split_name(split)
+        samples = []
+
+        if split == "train":
+            # Demonstration Data
+            demonstration_split_ds = demonstration_ds[split_name].map(
+                process_demonstration_prompts, with_indices=True, batched=True, batch_size=1000
+            )
+
+            # Comparison Data
+            comparison_split_ds = comparison_ds[split_name].map(
+                process_comparison_prompts, with_indices=True, batched=True, batch_size=2
+            )
+
+            # Add Demonstration Data
+            n_split = n_samples.get(split_name, len(demonstration_split_ds))
+            for prompt, label, ids in tqdm(
+                zip(
+                    demonstration_split_ds[:n_split]["prompt"],
+                    demonstration_split_ds[:n_split]["label"],
+                    demonstration_split_ds[:n_split]["id"],
+                ),
+                desc=f"Preprocessing Demonstration Prompts",
+                total=n_split,
+            ):
+                # Create Sample
+                sample = Sample(
+                    id=ids,
+                    prompt_or_input_text=prompt,
+                    references=[label],
+                    meta_data={"reference": label},
+                )
+                samples.append(sample)
+
+            # Add Comparison Data
+            comparison_n_split = n_samples.get(split_name, len(demonstration_split_ds))
+            for prompt, label, ids in tqdm(
+                zip(
+                    comparison_split_ds[:comparison_n_split]["prompt"],
+                    comparison_split_ds[:comparison_n_split]["label"],
+                    comparison_split_ds[:comparison_n_split]["id"],
+                ),
+                desc=f"Preprocessing Comparison Prompts",
+                total=comparison_n_split,
+            ):
+                # Create Sample
+                sample = Sample(
+                    id=ids+n_split,
+                    prompt_or_input_text=prompt,
+                    references=[label],
+                    meta_data={"reference": label},
+                )
+                samples.append(sample)
+
+            task_instance = cls(samples)
+            return task_instance
+        else:
+            if split == "val":
+                # Map does caching
+                split_ds = demonstration_ds[split_name].map(
+                    process_demonstration_prompts, with_indices=True, batched=True, batch_size=1000
+                )
+            elif split == "test":
+                # Map does caching
+                split_ds = comparison_ds[split_name].map(
+                    process_comparison_prompts, with_indices=True, batched=True, batch_size=1000
+                )
+
+            n_split = n_samples.get(split_name, len(split_ds))
+            for prompt, label, ids in tqdm(
+                zip(
+                    split_ds[:n_split]["prompt"],
+                    split_ds[:n_split]["label"],
+                    split_ds[:n_split]["id"],
+                ),
+                desc=f"Preprocessing {split} Prompts",
+                total=n_split,
+            ):
+                # Create Sample
+                sample = Sample(
+                    id=ids,
+                    prompt_or_input_text=prompt,
+                    references=[label],
+                    meta_data={"reference": label},
+                )
+                samples.append(sample)
+            task_instance = cls(samples)
+            return task_instance
+
+    @staticmethod
+    def gen_split_name(split: str):
+        if split == "train":
+            split_name = "train"
+        elif split == "val":
+            #split_name = "valid"
+            split_name = "valid1"
+        elif split == "test":
+            split_name = "test"
+        else:
+            raise NotImplementedError
+        return split_name
+
+class TLDRRLPreference(BaseTask):
+    @classmethod
+    def prepare(
+        cls,
+        split: str,
+        tokenizer_id: str,
+        max_prompt_length: int,
+        #n_samples: Dict[str, int] = {"valid": 100},
+        #n_samples: Dict[str, int] = {"train": 100, "valid": 100},
+        n_samples: Dict[str, int] = {"valid": 1000, "test": 1000},
+        #n_samples: Dict[str, int] = {"train": 1000, "valid": 100, "test": 500},
+        reference_type: str = "chosen",
+    ):
+        rng = np.random.default_rng()
+        tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer_id
+        )  # NOTE: truncation side | right, padding side | left
+        #tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        tokenizer.padding_side = "left"
+        tokenizer.truncation_side = "right"
+
+        def process_prompts(example, idxs):
+            """
+            Formatting:
+            SUBREDDIT: <r/...>
+            \n\n
+            TITLE: <title>
+            \n\n
+            POST: <post>
+            \n\n
+            TL;DR:
+            """
+            prompt = example["prompt"]
+            prompt = ["\n\nTITLE:".join(p.split("\nTITLE:")) for p in prompt]
+            processed_prompt = ["\n\nPOST:".join(p.split("\nPOST:")) for p in prompt]
+            #processed_prompt = [p.split("TL;DR:")[0] for p in prompt]
+            tmp = tokenizer.batch_decode(
+                tokenizer(
+                    processed_prompt,
+                    truncation=True,
+                    max_length=max_prompt_length - 7,  # to make sure "TL;DR" dont get truncated
+                    add_special_tokens=False,
+                )["input_ids"],
+                skip_special_tokens=True,
+            )
+            tmp = [t.strip() + "\n\nTL;DR: " for t in tmp]
+            #tmp = [t.strip() + " TL;DR: " for t in tmp]
+            tmp = tokenizer.batch_decode(
+                tokenizer(
+                    tmp,
+                    truncation=True,
+                    max_length=max_prompt_length,
+                    add_special_tokens=False,
+                )["input_ids"],
+                skip_special_tokens=True,
+            )
+            #tmp = [t.strip() for t in tmp]
+            if reference_type == "chosen":
+                label = example["chosen"]
+            elif reference_type == "rejected":
+                label = example["rejected"]
+            else:
+                key = rng.choice(["chosen", "rejected"])
+                label = example[key]
+            processed_label = [l.split("TL;DR: ")[1].lstrip() for l in label]
+            return {"id": idxs, "prompt": tmp, "label": processed_label}
+            #return {"id": idxs, "prompt": tmp, "label": example["label"]}
+
+        #ds = load_dataset("CarperAI/openai_summarize_tldr")
+        #split_name = TLDR.gen_split_name(split)
+        ds = load_dataset("CarperAI/openai_summarize_comparisons")
+        split_name = TLDRPreference.gen_split_name(split)
+        samples = []
+
+        # Map does caching
+        split_ds = ds[split_name].map(
+            #process_prompts, with_indices=True, batched=True, batch_size=1000
+            process_prompts, with_indices=True, batched=True, batch_size=10
+        )
+        n_split = n_samples.get(split_name, len(split_ds))
+        for prompt, label, ids in tqdm(
+            zip(
+                split_ds[:n_split]["prompt"],
+                split_ds[:n_split]["label"],
+                split_ds[:n_split]["id"],
+            ),
+            desc=f"Preprocessing {split} Prompts",
+            total=n_split,
+        ):
+            # Create Sample
+            sample = Sample(
+                id=ids,
+                prompt_or_input_text=prompt,
+                references=[label],
+                meta_data={"reference": label},
+            )
+            samples.append(sample)
+        task_instance = cls(samples)
+        return task_instance
+
+    @staticmethod
+    def gen_split_name(split: str):
+        if split == "train":
+            split_name = "train"
+        elif split == "val":
+            #split_name = "valid"
+            split_name = "valid1"
         elif split == "test":
             split_name = "test"
         else:

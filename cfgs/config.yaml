@@ -7,7 +7,9 @@ defaults:
   - override hydra/job_logging: disabled
 
     #experiment_name: ppo_ref
-experiment_name: mistral_supervised
+    #experiment_name: mistral_supervised
+    #experiment_name: ppo_ref_high_learning_with_warmup_decay_lag_with_mask
+experiment_name: ppo_with_chosen
     #experiment_name: test
 
 hydra:

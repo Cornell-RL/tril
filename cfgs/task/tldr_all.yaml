@@ -2,7 +2,7 @@
 
 task:
   #id: tldr
-  id: tldr_preference_rl
+  id: tldr_combined_rl
   args:
     #tokenizer_id: gpt2
     tokenizer_id: EleutherAI/gpt-j-6B

@@ -53,6 +53,10 @@ class PPO(BaseOnPolicyAlgorithm):
                         masks = (rollout_data.masks * rollout_data.rollin_masks).to(
                             self.accelerator.device
                         )
+                        #masks = (rollout_data.masks).to(
+                        #    self.accelerator.device
+                        #)
+
                         n_samples = torch.sum(masks)
 
                         observations = rollout_data.observations[:, :-1].to(

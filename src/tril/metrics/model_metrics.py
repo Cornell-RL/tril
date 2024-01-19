@@ -175,6 +175,8 @@ class Perplexity(BaseMetric):
         self._stride = stride
         self._use_text_from_meta_data = use_text_from_meta_data
         self._tokenizer = AutoTokenizer.from_pretrained(self._tokenizer_id)
+        #NOTE
+        self._tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
     @property
     def name(self):

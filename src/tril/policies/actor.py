@@ -106,6 +106,7 @@ class LMActor(nn.Module):
     def get_parameters(self):
         if self.peft_config is not None:
             params = []
+            #self.model.set_adapter(self.policy_adapter_name)
             for name, param in self.named_parameters():
                 if "adapter" not in name:
                     params.append(param)
@@ -118,6 +119,7 @@ class LMActor(nn.Module):
     def get_named_parameters(self):
         if self.peft_config is not None:
             params = []
+            #self.model.set_adapter(self.policy_adapter_name)
             for name, param in self.named_parameters():
                 if "adapter" not in name:
                     params.append((name, param))
