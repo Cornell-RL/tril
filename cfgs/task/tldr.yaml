@@ -1,15 +1,15 @@
 # @package _global_
 
 task:
-  #id: tldr
-  id: tldr_preference_rl
+  id: tldr
+  #id: tldr_preference_rl
   args:
     #tokenizer_id: gpt2
     tokenizer_id: EleutherAI/gpt-j-6B
     #tokenizer_id: mistralai/Mistral-7B-v0.1
     #tokenizer_id: gpt2-xl
     max_prompt_length: 500
-    reference_type: chosen
+    #reference_type: chosen
 
 sampling:
   batch_size_per_process: 32
@@ -23,10 +23,12 @@ sampling:
   train_generation_kwargs:
     do_sample: True
     max_new_tokens: ${sampling.max_gen_len}
+    temperature: 0.7
   eval_generation_kwargs:
     #do_sample: False
     do_sample: True
-    top_p: 0.92
+    #top_p: 0.92
+    temperature: 0.01
     max_new_tokens: ${sampling.max_gen_len}
 
 reward_fn:

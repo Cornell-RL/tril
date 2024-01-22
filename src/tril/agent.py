@@ -225,7 +225,7 @@ class Agent(nn.Module):
                 return float(current_step) / float(max(1.0, num_warmup_steps))
             else:
             #if current_step >= num_warmup_steps:
-                return max(0.001, float(num_decay_steps - (current_step - num_warmup_steps))/float(num_decay_steps))
+                return max(0.0, float(num_decay_steps - (current_step - num_warmup_steps))/float(num_decay_steps))
             #return 1.0
 
         def warmup_with_decay_lag(current_step, *, num_warmup_steps, num_decay_steps):
@@ -244,11 +244,11 @@ class Agent(nn.Module):
             "cosine": CosineAnnealingLR,
         }
         if scheduler_args is None or scheduler_args["id"] == "constant":
-            lr_lambda = partial(warmup, num_warmup_steps=100)
-            #lr_lambda = partial(warmup_with_decay, num_warmup_steps=100, num_decay_steps=1600)
+            #lr_lambda = partial(warmup, num_warmup_steps=100)
+            #lr_lambda = partial(warmup_with_decay, num_warmup_steps=100, num_decay_steps=4000)
             #lr_lambda = partial(warmup_with_decay_lag, num_warmup_steps=100, num_decay_steps=1600)
-            #return LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0)  # Constant
-            return LambdaLR(optimizer, lr_lambda=lr_lambda)  # Constant with warmup
+            return LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0)  # Constant
+            #return LambdaLR(optimizer, lr_lambda=lr_lambda)  # Constant with warmup
         decay_schedule_cls = types.get(
             scheduler_args["id"], "linear"
         )  # default to linear

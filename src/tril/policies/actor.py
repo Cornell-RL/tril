@@ -256,6 +256,9 @@ class LMActor(nn.Module):
                 return ActorOutput(None, None)
 
             next_token_logits = outputs.logits[:, -self.max_gen_len :, :]
+
+            # Temperature Correction
+            next_token_logits /= self.gen_kwargs["temperature"]
             dist = Categorical(logits=next_token_logits)
             entropy = dist.entropy()
             log_prob = dist.log_prob(actions)

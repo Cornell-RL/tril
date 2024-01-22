@@ -147,8 +147,10 @@ tldr:
     verbose: 0
     n_iters: 1000
     #batch_size: 32
-    batch_size: 128
-    grad_accumulation: 16
+    #batch_size: 128
+    batch_size: 512
+    #grad_accumulation: 16
+    grad_accumulation: 64
     #grad_accumulation: 4
     #trajectories_per_update: 128
     trajectories_per_update: 512
@@ -180,20 +182,22 @@ tldr:
     kl_type: 'fixedklcontroller'
     kl_lr: .01
     #coeff: 0.002
-    coeff: 0.001
+    coeff: 0.05
     target_kl: 0.1 
 
   optimizer:
-    #id: adamw
-    id: adam
+    id: adamw
+    #id: adam
     args:
-      lr: 5e-6
-      #weight_decay: 0.01
-      weight_decay: 0.0
+      #lr: 5e-6
+      lr: 3e-6
+      weight_decay: 0.01
+      #weight_decay: 0.0
       eps: 1e-5
 
   scheduler:
     id: constant
+    #id: linear
 
   tokenizer:
     #model_name: gpt2

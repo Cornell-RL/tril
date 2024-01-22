@@ -31,7 +31,10 @@ class PPO(BaseOnPolicyAlgorithm):
         clip_range = self.clip_range(self.current_progress_remaining)
         if self.clip_range_vf is not None:
             clip_range_vf = self.clip_range_vf(self.current_progress_remaining)
-
+        current_lr = self.current_progress_remaining * self.alg_cfg.optimizer.args.lr
+        for param_group in self.optimizer.param_groups:
+            param_group["lr"] = current_lr
+        
         continue_training = True
 
         for epoch in tqdm(
@@ -144,7 +147,11 @@ class PPO(BaseOnPolicyAlgorithm):
                             entropy_loss = -torch.sum(entropy * masks) / n_samples
 
                         # Value Loss
-                        value_masks, n_value = masks, n_samples
+                        value_masks = (rollout_data.masks).to(
+                            self.accelerator.device
+                        )
+                        #value_masks, n_value = masks, n_samples
+                        n_value = n_samples
                         if self.agent.policy.curr_alg_type == "aggrevate":
                             value_masks = (
                                 ~rollout_data.rollin_masks.to(
@@ -285,9 +292,10 @@ class PPO(BaseOnPolicyAlgorithm):
             for key, value in aggregated_training_info.items()
         }
         aggregated_training_info["ppo/clip_range"] = clip_range
-        aggregated_training_info["ppo/lr"] = self.scheduler.get_last_lr()[
-            0
-        ]  # Grab for single group
+        aggregated_training_info["ppo/lr"] = self.optimizer.param_groups[0]["lr"]
+        #aggregated_training_info["ppo/lr"] = self.scheduler.get_last_lr()[
+        #    0
+        #]  # Grab for single group
         if self.clip_range_vf is not None:
             aggregated_training_info["ppo/clip_range_vf"] = clip_range_vf
 
