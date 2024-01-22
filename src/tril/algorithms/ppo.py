@@ -32,9 +32,9 @@ class PPO(BaseOnPolicyAlgorithm):
         if self.clip_range_vf is not None:
             clip_range_vf = self.clip_range_vf(self.current_progress_remaining)
         current_lr = self.current_progress_remaining * self.alg_cfg.optimizer.args.lr
-        for param_group in self.optimizer.param_groups:
-            param_group["lr"] = current_lr
-        
+        for i in range(len(self.optimizer.param_groups)):
+            self.optimizer.param_groups[i]["lr"] = current_lr
+
         continue_training = True
 
         for epoch in tqdm(

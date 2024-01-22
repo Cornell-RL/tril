@@ -171,8 +171,8 @@ tldr:
     eval_batch_size: 5
     eval_every: 10
     save_every: 100
-    #eval_zero_shot: false
-    eval_zero_shot: true
+    eval_zero_shot: false
+    #eval_zero_shot: true
     save_checkpoints: false
     eval_splits: ['val']
     max_prompt_len: ${sampling.max_prompt_len}
