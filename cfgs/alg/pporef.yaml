@@ -12,15 +12,15 @@ tldr:
     #target_coef: 0.1
     eval_splits: ['val']
 
-  optimizer:
-    args:
-      #lr: 1e-5
-      lr: 5e-6
+    #optimizer:
+    #  args:
+    #    #lr: 1e-5
+    #    lr: 5e-6
 
   policy:
     id: multi_actor_critic
     args:
-      guide_model_name: "/home/jdc396/tril/outputs/base_train_warmup_128/2023-12-06_22-20-57/model_14500"
+      guide_model_name: jdchang/gptj_tldr_sft
       alg_type: 'ppo_pp'
       #beta: 0.2
       beta: 1.0
