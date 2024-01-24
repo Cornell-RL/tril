@@ -17,6 +17,7 @@ class PPO(BaseOnPolicyAlgorithm):
         tracker: Optional[Tracker] = None,
     ):
         super().__init__(cfg, accelerator, tracker)
+        self.better_than_ref = False
 
         # Setting critic
         self.value_fn = "policy"
