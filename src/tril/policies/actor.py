@@ -17,6 +17,24 @@ from tril.utils.generation_mixin import override_generation_routines
 from tril.utils.logit_processors import RollinProcessor
 from tril.utils.policy import AUTOMODEL_CLASS, ActorOutput, GenerationOutput, ModelType
 
+def first_true_indices(bools, dtype=torch.long):
+    """
+    Takes an N-dimensional bool tensor and returns an (N-1)-dimensional tensor of integers giving
+    the position of the first True in each "row".
+
+    Returns the length of the rows (bools.size(-1)) if no element is True in a given row.
+    """
+    row_len = bools.size(-1)
+    zero_or_index = row_len * (~bools).type(dtype) + torch.arange(row_len, dtype=dtype, device=bools.device)
+    return torch.min(zero_or_index, dim=-1).values
+
+def truncate_response(tokenizer, responses):
+    size = responses.shape[-1]
+    trunc_idxs = first_true_indices(responses == tokenizer.eos_token_id).unsqueeze(-1)
+    new_size = [1] * (len(responses.size()) - 1) + [size] #TODO: grab from config
+    idxs = torch.arange(size, device=responses.device).view(*new_size)
+    postprocessed_responses = torch.masked_fill(responses, idxs > trunc_idxs, tokenizer.pad_token_id)
+    return postprocessed_responses
 
 #class LMActor(nn.Module, PyTorchModelHubMixin):
 class LMActor(nn.Module):
@@ -62,12 +80,18 @@ class LMActor(nn.Module):
         )
 
         if model is None:
+            # TODO:
+            model_config = AutoConfig.from_pretrained(model_name)
+            configure_dropout(model_config, args.dropout_layer_keys, 0.0)  # disable dropout
             self.model = AUTOMODEL_CLASS[model_type].from_pretrained(
                 model_name,
+                config=model_config,
                 quantization_config=quantization_config,
             )
-            self.model.config.pad_token_id = self.tokenizer.pad_token_id # pad token to special token
-            self.model.resize_token_embeddings(len(self.tokenizer)) # resize embeddings for pad token
+            #self.model.config.pad_token_id = self.tokenizer.pad_token_id # pad token to special token
+            self.model.generation_config.eos_token_id = None
+            self.model.generation_config.pad_token_id = None
+            #self.model.resize_token_embeddings(len(self.tokenizer)) # resize embeddings for pad token
             self.model.__class__ = override_generation_routines(type(self.model))
             if self.peft_config is not None:
                 #self.model = prepare_model_for_kbit_training(
@@ -417,6 +441,7 @@ class LMActor(nn.Module):
 
         # get only the generated text (excluding prompt)
         gen_tokens = gen_output["sequences"][:, -seq_length:]
+        gen_tokens = truncate_response(tokenizer, gen_tokens)
 
         if gather_from_devices:
             # now we got to pad the gen_tokens to maximum sequence length

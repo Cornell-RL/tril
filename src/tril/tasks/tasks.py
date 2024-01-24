@@ -126,6 +126,7 @@ class TLDR(BaseTask):
                 skip_special_tokens=True,
             )
             #tmp = [t.strip() for t in tmp]
+            labels = [l + tokenizer.eos_token for l in example["label"]]
             return {"id": idxs, "prompt": tmp, "label": example["label"]}
 
         ds = load_dataset("CarperAI/openai_summarize_tldr")

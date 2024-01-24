@@ -89,6 +89,7 @@ class Agent(nn.Module):
                 all_tokens,
                 ref_ids=obs_tensor["reference_encoded_pt"],
                 ref_mask=obs_tensor["reference_attention_mask_pt"],
+                retokenize=False,
             ).squeeze(-1)
         else:
             all_tokens = kwargs["all_tokens"]

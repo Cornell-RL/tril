@@ -134,14 +134,14 @@ tldr:
       max_gen_len: ${sampling.max_gen_len}
       create_reference: False
       mlp_head: False
-      #quantize_model: False
-      quantize_model: True
+      quantize_model: False
+      #quantize_model: True
       gen_kwargs: ${sampling.train_generation_kwargs}
       prompt_truncation_side: ${sampling.prompt_truncation_side}
       
-      lora:
-        peft_config:
-          r: 16
-          lora_alpha: 32
-          lora_dropout: 0.05
-          task_type: CAUSAL_LM
+      #lora:
+      #  peft_config:
+      #    r: 16
+      #    lora_alpha: 32
+      #    lora_dropout: 0.05
+      #    task_type: CAUSAL_LM

@@ -8,14 +8,17 @@ task:
     tokenizer_id: EleutherAI/gpt-j-6B
     #tokenizer_id: mistralai/Mistral-7B-v0.1
     #tokenizer_id: gpt2-xl
-    max_prompt_length: 500
+    #max_prompt_length: 500
+    max_prompt_length: 512
     #reference_type: chosen
 
 sampling:
   batch_size_per_process: 32
   #batch_size_per_process: 64
-  max_prompt_len: 500
-  max_gen_len: 50
+  #max_prompt_len: 500
+  max_prompt_len: 512
+  #max_gen_len: 50
+  max_gen_len: 53
   prompt_padding_side: left
   prompt_truncation_side: left
   context_padding_side: right

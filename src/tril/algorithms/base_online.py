@@ -16,7 +16,7 @@ from tril.buffers.offline_buffer import create_dataloader
 from tril.buffers.online_buffer import OnlineBuffer
 from tril.buffers.prompt_buffer import create_prompt_dataloader, infinite_dataloader
 from tril.logging import LoggingSamplingMetrics, LoggingTrainingMetrics, Tracker
-from tril.utils.builders import build_metrics, build_task, build_tokenizer
+from tril.utils.builders import build_metrics, build_task, build_tokenizer, truncate_response
 from tril.utils.evaluation import evaluate_on_samples
 from tril.utils.helpers import (
     TorchTracemalloc,
@@ -273,6 +273,9 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
         seq_length = len(gen_output["scores"])
         all_tokens = gen_output["sequences"]
 
+        # Truncate based on eos
+        all_tokens = truncate_response(self.tokenizer, all_tokens)
+
         if (
             self.accelerator.unwrap_model(self.agent.policy).model_type
             == ModelType.SEQ2SEQ
@@ -286,6 +289,7 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
 
         # Pad
         if seq_length < self.max_gen_len:
+            #NOTE with truncate this shouldn't happen
             prev_padding_side = self.tokenizer.padding_side
             self.tokenizer.padding_side = "right"
             padded_out = self.tokenizer.pad(
@@ -302,6 +306,13 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
             obs_tensor=obs_tensor,
             reference_map=self.reference_map,
         )
+
+        # Reward Penalty Here
+        contain_pad_token = torch.any(all_tokens[:, -50:] == self.tokenizer.pad_token_id, dim=-1).to(self.accelerator.device)
+        terminal_rewards = torch.where(
+            contain_pad_token.cpu(), terminal_rewards, torch.full_like(terminal_rewards, -1)
+        )
+
 
         # Everything is shape (Batch size, gen length)
         with torch.no_grad():

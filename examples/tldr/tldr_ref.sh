@@ -1,5 +1,5 @@
 #!/bin/bash
-accelerate launch --config_file accelerate_cfgs/deepspeed_config.yaml --main_process_port 29084 --num_processes 4 main.py \
+accelerate launch --config_file accelerate_cfgs/deepspeed_config.yaml --main_process_port 29083 --num_processes 4 main.py \
     task=tldr \
     alg=pporef \
     experiment_name=ppo_ref_vf \
