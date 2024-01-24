@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+import torch
 
 from accelerate import Accelerator
 from omegaconf import OmegaConf
@@ -18,6 +19,24 @@ def get_linear_fn(start: float, end: float, end_fraction: float = 1.0):
 
     return func
 
+def first_true_indices(bools, dtype=torch.long):
+    """
+    Takes an N-dimensional bool tensor and returns an (N-1)-dimensional tensor of integers giving
+    the position of the first True in each "row".
+
+    Returns the length of the rows (bools.size(-1)) if no element is True in a given row.
+    """
+    row_len = bools.size(-1)
+    zero_or_index = row_len * (~bools).type(dtype) + torch.arange(row_len, dtype=dtype, device=bools.device)
+    return torch.min(zero_or_index, dim=-1).values
+
+def truncate_response(tokenizer, responses):
+    size = responses.shape[-1]
+    trunc_idxs = first_true_indices(responses == tokenizer.eos_token_id).unsqueeze(-1)
+    new_size = [1] * (len(responses.size()) - 1) + [size] #TODO: grab from config
+    idxs = torch.arange(size, device=responses.device).view(*new_size)
+    postprocessed_responses = torch.masked_fill(responses, idxs > trunc_idxs, tokenizer.pad_token_id)
+    return postprocessed_responses
 
 def build_tokenizer(tokenizer_config: Dict[str, Any]):
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_config["model_name"])
