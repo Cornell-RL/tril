@@ -5,6 +5,7 @@ warnings.simplefilter(action="ignore", category=UserWarning)
 
 import os
 
+os.environ["WANDB_MODE"] = "offline"
 os.environ["NCCL_BLOCKING_WAIT"] = "0"
 os.environ['DS_SKIP_CUDA_CHECK'] = '1'
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"

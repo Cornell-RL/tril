@@ -8,6 +8,8 @@ eval_tables/
 calibrations/
 adapters/
 #reward_training/
+*.slurm
+*.out
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

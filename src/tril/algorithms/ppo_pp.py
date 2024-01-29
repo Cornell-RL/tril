@@ -66,6 +66,7 @@ class PPO_PP(PPO):
         obs_tensor: Dict[str, torch.Tensor],
         rollin_actions: Optional[torch.Tensor] = None,
         rollin_seq_lens: Optional[List[int]] = None,
+        anneal_beta: bool = False,
     ):
         # Note Rollin Mask is used to determine which segment of the trajectory to update # noqa
         # Given a full mixed sequence length of 5, if we have rollin mask [0, 0, 1, 1, 1], # noqa
@@ -82,6 +83,7 @@ class PPO_PP(PPO):
             rollin_seq_lens=rollin_seq_lens,
             rng=self.rng,
             return_mask=True,
+            anneal_beta=anneal_beta,
         )
         rollin_lengths = rollin_mask.sum(axis=1)
 

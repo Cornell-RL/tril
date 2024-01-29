@@ -39,6 +39,7 @@ class LMMultiActorCritic(nn.Module, PyTorchModelHubMixin):
         gen_kwargs: Dict[str, Any] = {},
         guide_gen_kwargs: Dict[str, Any] = {},
         prompt_truncation_side: str = "left",
+        anneal_beta: bool = False,
         **kwargs,
     ):
         super().__init__()
@@ -55,6 +56,7 @@ class LMMultiActorCritic(nn.Module, PyTorchModelHubMixin):
         self.alg_type = alg_type
         self.curr_alg_type = alg_type
         self.beta = beta
+        self.anneal_beta = anneal_beta
 
         self.create_guide_critic = create_guide_critic
         self.reference_as_guide = model_name == guide_model_name
@@ -166,6 +168,13 @@ class LMMultiActorCritic(nn.Module, PyTorchModelHubMixin):
             beta = self.beta[self.curr_alg_type]
         else:
             beta = self.beta
+
+        if self.anneal_beta and kwargs.get("anneal_beta", False):
+            beta = 0.0
+
+        if "anneal_beta" in kwargs.keys():
+            kwargs.pop("anneal_beta")
+
         kwargs["beta"] = beta
 
         # Generate with proper model
