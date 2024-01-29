@@ -10,12 +10,20 @@ from numpy.random import Generator
 from omegaconf import DictConfig, OmegaConf
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from torch.distributions import Categorical
-from transformers import BitsAndBytesConfig, PreTrainedTokenizer
+from transformers import BitsAndBytesConfig, PreTrainedTokenizer, AutoConfig
 from transformers.generation.logits_process import LogitsProcessorList
 
 from tril.utils.generation_mixin import override_generation_routines
 from tril.utils.logit_processors import RollinProcessor
 from tril.utils.policy import AUTOMODEL_CLASS, ActorOutput, GenerationOutput, ModelType
+
+# taken from https://github.com/microsoft/DeepSpeedExamples/blob/737c6740bec38b77a24a59135b6481a53d566b38/applications/DeepSpeed-Chat/training/utils/model/model_utils.py#L20C1-L26C52
+def configure_dropout(model_config, dropout_layer_keys, dropout):
+    if dropout is not None:
+        for key in dropout_layer_keys:
+            if hasattr(model_config, key):
+                print(f"Setting model_config.{key} to {dropout}")
+                setattr(model_config, key, dropout)
 
 def first_true_indices(bools, dtype=torch.long):
     """
@@ -80,18 +88,19 @@ class LMActor(nn.Module):
         )
 
         if model is None:
-            # TODO:
             model_config = AutoConfig.from_pretrained(model_name)
-            configure_dropout(model_config, args.dropout_layer_keys, 0.0)  # disable dropout
+            dropout_layer_keys = ["attn_pdrop", "embd_pdrop", "resid_pdrop", "summary_first_dropout"]
+            configure_dropout(model_config, dropout_layer_keys, 0.0)  # disable dropout
             self.model = AUTOMODEL_CLASS[model_type].from_pretrained(
                 model_name,
                 config=model_config,
                 quantization_config=quantization_config,
             )
             #self.model.config.pad_token_id = self.tokenizer.pad_token_id # pad token to special token
+            #self.model.resize_token_embeddings(len(self.tokenizer)) # resize embeddings for pad token
+
             self.model.generation_config.eos_token_id = None
             self.model.generation_config.pad_token_id = None
-            #self.model.resize_token_embeddings(len(self.tokenizer)) # resize embeddings for pad token
             self.model.__class__ = override_generation_routines(type(self.model))
             if self.peft_config is not None:
                 #self.model = prepare_model_for_kbit_training(
@@ -229,14 +238,23 @@ class LMActor(nn.Module):
                     .long()
                     .to(accelerator.device)
                 )
-                model_kwargs = {
+                # Manually Handle Pad Tokens
+                input_encoded_pt = torch.masked_fill(input_encoded_pt, ~(gen_attention_mask_pt.bool()), 0) #TODO 
+
+                model_inputs = {
+                    "input_ids": input_encoded_pt,
                     "attention_mask": gen_attention_mask_pt,
                     "use_cache": False,
                 }
 
-                model_inputs = accelerator.unwrap_model(
-                    model
-                ).prepare_inputs_for_generation(input_encoded_pt, **model_kwargs)
+                #model_kwargs = {
+                #    "attention_mask": gen_attention_mask_pt,
+                #    "use_cache": False,
+                #}
+
+                #model_inputs = accelerator.unwrap_model(
+                #    model
+                #).prepare_inputs_for_generation(input_encoded_pt, **model_kwargs)
 
             elif self.model_type == ModelType.SEQ2SEQ:
                 input_encoded_pt = input_encoded_pt[:, : self.max_prompt_len]
@@ -347,6 +365,10 @@ class LMActor(nn.Module):
         cm = self.get_context_manager(model_fn)
         with cm:
             # generate
+            #self.model.generation_config.pad_token_id = None
+            #self.model.generation_config.eos_token_id = None
+            attention_mask = input_ids != self.tokenizer.pad_token_id
+            input_ids = torch.masked_fill(input_ids, ~attention_mask, 0) #TODO
             gen_output = accelerator.unwrap_model(self.model).generate(
                 inputs=input_ids.to(accelerator.device),
                 attention_mask=attention_mask.to(accelerator.device),
@@ -355,10 +377,13 @@ class LMActor(nn.Module):
                 synced_gpus=False,
                 #synced_gpus=True,
                 logits_processor=logits_processor,
-                pad_token_id=self.tokenizer.eos_token_id
-                if self.model_type == ModelType.CAUSAL
-                else self.tokenizer.pad_token_id,
+                #pad_token_id=self.tokenizer.eos_token_id
+                #if self.model_type == ModelType.CAUSAL
+                #else self.tokenizer.pad_token_id,
                 use_cache=True,
+                generation_config=self.model.generation_config,
+                pad_token_id=None,
+                eos_token_id=None,
                 **generation_kwargs_,
             )
             mask = (
@@ -422,6 +447,8 @@ class LMActor(nn.Module):
         else:
             generation_kwargs_ = gen_kwargs
         # generate
+        attention_mask = input_ids != self.tokenizer.pad_token_id
+        input_ids = torch.masked_fill(input_ids, ~attention_mask, 0) #TODO
         gen_output = accelerator.unwrap_model(self.model).generate(
             inputs=input_ids.to(accelerator.device),
             attention_mask=attention_mask.to(accelerator.device),
@@ -430,9 +457,10 @@ class LMActor(nn.Module):
             use_cache=True,
             synced_gpus=False,
             #synced_gpus=True,
-            pad_token_id=tokenizer.eos_token_id
-            if self.model_type == ModelType.CAUSAL
-            else tokenizer.pad_token_id,
+            #pad_token_id=tokenizer.eos_token_id
+            #if self.model_type == ModelType.CAUSAL
+            #else tokenizer.pad_token_id,
+            generation_config=self.model.generation_config,
             **generation_kwargs_,
         )
 

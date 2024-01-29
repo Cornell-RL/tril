@@ -428,3 +428,80 @@ tldr_combined_rl:
       lora_alpha: 32
       lora_dropout: 0.05
       task_type: CAUSAL_LM
+
+tldr_openai:
+  id: ppo
+  build_reward: True
+
+  args:
+    seed: 0
+    verbose: 2
+    n_iters: 1000
+    batch_size: 512
+    #batch_size: 128
+    #grad_accumulation: 64
+    grad_accumulation: 32
+    trajectories_per_update: 512
+    #trajectories_per_update: 128
+    n_epochs: 4
+    gamma: 1.0
+    gae_lambda: 0.95
+    vf_coef: 0.1
+    ent_coef: 0.0
+    target_coef: 0.0
+    target_regularization: True
+    clip_range: 0.2
+    clip_range_vf: 0.2
+    max_grad_norm: 1.0
+    target_kl: null
+    eval_batch_size: 5
+    eval_every: 10
+    save_every: 100
+    eval_zero_shot: true
+    save_checkpoints: false
+    eval_splits: ['val']
+    max_prompt_len: ${sampling.max_prompt_len}
+    max_gen_len: ${sampling.max_gen_len}
+
+  kl_div:
+    kl_type: 'fixedklcontroller'
+    kl_lr: .01
+    coeff: 0.05
+    target_kl: 0.1 
+
+  optimizer:
+    id: adamw
+    args:
+      lr: 3e-6
+      weight_decay: 0.01
+      eps: 1e-5
+
+  scheduler:
+    id: constant
+
+  tokenizer:
+    model_name: "./models/sft_model_2.9"
+    padding_side: left
+    truncation_side: right 
+    pad_token_as_eos_token: True 
+
+  policy:
+    id: actor_critic
+    args:
+      model_type: causal
+      model_name: "./models/sft_model_2.9"
+      max_prompt_len: ${sampling.max_prompt_len}
+      max_gen_len: ${sampling.max_gen_len}
+      create_reference: True
+      mlp_head: False
+      quantize_model: False
+      #quantize_model: True
+      gen_kwargs: ${sampling.train_generation_kwargs}
+      prompt_truncation_side: ${sampling.prompt_truncation_side}
+
+  lora:
+    peft_config:
+      r: 1024
+      lora_alpha: 2048
+      lora_dropout: 0.0
+      task_type: CAUSAL_LM

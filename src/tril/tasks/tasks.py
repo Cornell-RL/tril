@@ -69,6 +69,59 @@ class CommonGen(BaseTask):
             raise NotImplementedError
         return split_name
 
+class TLDROpenAI(BaseTask):
+    @classmethod
+    def prepare(
+        cls,
+        split: str,
+        tokenizer_id: str,
+        max_prompt_length: int,
+        n_samples: Dict[str, int] = {"validation": 1000, "test": 100},
+    ):
+        tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer_id # should be the same as model id
+        )  # NOTE: truncation side | right, padding side | left
+        ##tokenizer.pad_token = tokenizer.eos_token
+        #tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        tokenizer.padding_side = "left"
+        tokenizer.truncation_side = "right"
+
+        split_name = TLDROpenAI.gen_split_name(split)
+        ds = load_dataset(
+            "cleanrl/summarize_from_feedback_tldr_3_filtered_oai_preprocessing_1704578687", split=split_name
+        )
+        samples = []
+        n_split = n_samples.get(split_name, len(ds))
+        for ids, (prompt, label) in enumerate(tqdm(
+            zip(
+                ds["query"][:n_split],
+                ds["reference_response"][:n_split],
+            ),
+            desc=f"Preprocessing {split} Prompts",
+            total=n_split,
+        )):
+            # Create Sample
+            sample = Sample(
+                id=ids,
+                prompt_or_input_text=prompt,
+                references=[label],
+                meta_data={"reference": label},
+            )
+            samples.append(sample)
+        task_instance = cls(samples)
+        return task_instance
+
+    @staticmethod
+    def gen_split_name(split: str):
+        if split == "train":
+            split_name = "train"
+        elif split == "val":
+            split_name = "validation"
+        elif split == "test":
+            split_name = "test"
+        else:
+            raise NotImplementedError
+        return split_name
 
 class TLDR(BaseTask):
     @classmethod
@@ -624,3 +677,7 @@ class IMDBForSeq2Seq(BaseTask):
 
         task_instance = cls(samples)
         return task_instance
+
+if __name__ == '__main__':
+    task = TLDROpenAI.prepare('val', '/home/jdc396/tril/models/sft_model_2.9', 512)
+    import pdb; pdb.set_trace()

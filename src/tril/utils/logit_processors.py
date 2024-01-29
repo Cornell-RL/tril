@@ -54,7 +54,7 @@ class TeacherForcingLogProbProcessor(LogitsProcessor):
         vocab_size = scores.size(-1)
         new_scores = one_hot(
             self.actions[:, self.counter], num_classes=vocab_size
-        ).float()
+        ).to(dtype=scores.dtype)
         assert scores.shape == new_scores.shape  # (batch_size, vocab_size)
         new_scores = new_scores.to(scores.device)
         dist = Categorical(logits=scores)
@@ -104,7 +104,7 @@ class RollinProcessor(LogitsProcessor):
         mask = self.rollin_mask[:, self.counter]
         assert scores.shape == new_scores.shape  # (batch_size, vocab_size)
 
-        new_scores = new_scores.to(scores.device)
+        new_scores = new_scores.to(scores.device, dtype=scores.dtype)
         # Only do Teacher Forcing on the rollins
         scores[mask] = new_scores[mask]
         # import pdb; pdb.set_trace()

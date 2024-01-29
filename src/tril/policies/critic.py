@@ -69,6 +69,8 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
                 # self.model.load_adapter("16_gptj_process", self.value_adapter_name, is_trainable=True)
 
         hidden_size = self.model.config.hidden_size
+
+        # COMMENTING START
         if mlp_head:
             self.score = nn.Sequential(
                 nn.Linear(hidden_size, hidden_size * 2),
@@ -77,9 +79,10 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
             )
         else:
             self.score = nn.Linear(hidden_size, 1, bias=True)
+        # COMMENTING END
 
 
-        #adapter_state_dict = torch.load("16_gptj_process/adapter_model.bin", map_location="cpu")
+        #adapter_state_dict = torch.load("rm_pythia_2.8/adapter_model.bin", map_location="cpu")
         #for score_name_candidate in ["score"]:
         #    if any(
         #        [score_name_candidate in name for name in adapter_state_dict.keys()]
@@ -101,8 +104,7 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
         #self.score = nn.Linear(hidden_dim, num_labels, bias=True).to(
         #    dtype=self.model.dtype
         #)
-        #self.score.load_state_dict(score_dict, strict=False)
-        #torch.nn.init.constant_(self.score.bias, 0.0)
+        #self.score.load_state_dict(score_dict)
 
         #if quantize_model:
         #    self.score = self.score.half()
@@ -219,17 +221,24 @@ class LMCritic(nn.Module, PyTorchModelHubMixin):
         gen_attention_mask_pt = (
             input_encoded_pt.not_equal(self.pad_token_id).long().to(accelerator.device)
         )
+        input_encoded_pt = torch.masked_fill(input_encoded_pt, ~(gen_attention_mask_pt.bool()), 0) #TODO
 
         # Get Model Inputs for respective transformer type
         if self.model_type == ModelType.CAUSAL:
-            model_kwargs = {
+            #model_kwargs = {
+            #    "attention_mask": gen_attention_mask_pt,
+            #    "use_cache": False,
+            #}
+
+            #model_inputs = accelerator.unwrap_model(
+            #    self.model
+            #).prepare_inputs_for_generation(input_encoded_pt, **model_kwargs)
+            # Manually Handle Pad Tokens
+            model_inputs = {
+                "input_ids": input_encoded_pt,
                 "attention_mask": gen_attention_mask_pt,
                 "use_cache": False,
             }
-
-            model_inputs = accelerator.unwrap_model(
-                self.model
-            ).prepare_inputs_for_generation(input_encoded_pt, **model_kwargs)
 
         elif self.model_type == ModelType.SEQ2SEQ:
             # Account for Decoder Logic

@@ -132,7 +132,7 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
             self.score = nn.Linear(hidden_dim, 1).to(dtype=self.model.dtype)
 
         self.reward_tokenizer = AutoTokenizer.from_pretrained(reward_tokenizer_id)
-        self.reward_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        #self.reward_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         self.reward_tokenizer.padding_side = "right"
         self.reward_tokenizer.truncation_side = "left" # focus on the generations
 
@@ -191,7 +191,8 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
         has_bias = any(["bias" in name for name in adapter_state_dict.keys()])
 
         # Add score layer
-        self.score = nn.Linear(hidden_dim, num_labels, bias=has_bias).to(
+        #self.score = nn.Linear(hidden_dim, num_labels, bias=has_bias).to(
+        self.score = nn.Linear(hidden_dim, num_labels, bias=True).to(
             dtype=self.model.dtype
         )
         self.score.load_state_dict(score_dict)
@@ -235,23 +236,28 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
             input_ids = encodings["input_ids"].to(accelerator.device)
             attention_mask = encodings["attention_mask"]
 
-        if attention_mask is None:
-            gen_attention_mask_pt = (
-                input_ids.not_equal(self.reward_tokenizer.pad_token_id)
-                .long()
-                .to(accelerator.device)
-            )
-        else:
-            gen_attention_mask_pt = attention_mask.to(accelerator.device)
+        #if attention_mask is None:
+        gen_attention_mask_pt = (
+            input_ids.not_equal(self.reward_tokenizer.pad_token_id)
+            .long()
+            .to(accelerator.device)
+        )
+        #else:
+        #    gen_attention_mask_pt = attention_mask.to(accelerator.device)
 
-        model_kwargs = {
+        #model_kwargs = {
+        #    "attention_mask": gen_attention_mask_pt,
+        #    "use_cache": False,
+        #}
+        input_ids = torch.masked_fill(input_ids, ~(gen_attention_mask_pt.bool()), 0) #TODO
+        #model_inputs = accelerator.unwrap_model(
+        #    self.model
+        #).prepare_inputs_for_generation(input_ids, **model_kwargs)
+        model_inputs = {
+            "input_ids": input_ids,
             "attention_mask": gen_attention_mask_pt,
             "use_cache": False,
         }
-
-        model_inputs = accelerator.unwrap_model(
-            self.model
-        ).prepare_inputs_for_generation(input_ids, **model_kwargs)
 
         outputs = self.model(
             **model_inputs,
@@ -269,64 +275,65 @@ class TrainableAdapterRewardFunction(BaseReward, nn.Module):
         rewards = rewards.cpu()
 
         # Ref norm
-        if ref_ids is not None and scale_by_ref:
-            if retokenize:
-                # Retokenize:
-                samples = tokenizer.batch_decode(ref_ids, skip_special_tokens=True)
-                samples = [
-                    "<|startoftext|>" + sample + "<|endoftext|>" for sample in samples
-                ]  # TODO: make template more general
-                #samples = [
-                #    sample + self.reward_tokenizer.eos_token for sample in samples
-                #]  # TODO: make template more general
+        #if ref_ids is not None and scale_by_ref:
+        #    if retokenize:
+        #        # Retokenize:
+        #        samples = tokenizer.batch_decode(ref_ids, skip_special_tokens=True)
+        #        samples = [
+        #            "<|startoftext|>" + sample + "<|endoftext|>" for sample in samples
+        #        ]  # TODO: make template more general
+        #        #samples = [
+        #        #    sample + self.reward_tokenizer.eos_token for sample in samples
+        #        #]  # TODO: make template more general
 
-                encodings = self.reward_tokenizer(
-                    samples,
-                    truncation=True,
-                    max_length=550,
-                    padding="max_length",
-                    return_tensors="pt",
-                )
-                ref_ids = encodings["input_ids"].to(accelerator.device)
-                ref_mask = encodings["attention_mask"]
-            if ref_mask is None:
-                ref_attention_mask_pt = (
-                    ref_ids.not_equal(self.reward_tokenizer.pad_token_id)
-                    .long()
-                    .to(accelerator.device)
-                )
-            else:
-                ref_attention_mask_pt = ref_mask.to(accelerator.device)
+        #        encodings = self.reward_tokenizer(
+        #            samples,
+        #            truncation=True,
+        #            max_length=550,
+        #            padding="max_length",
+        #            return_tensors="pt",
+        #        )
+        #        ref_ids = encodings["input_ids"].to(accelerator.device)
+        #        ref_mask = encodings["attention_mask"]
+        #    if ref_mask is None:
+        #        ref_attention_mask_pt = (
+        #            ref_ids.not_equal(self.reward_tokenizer.pad_token_id)
+        #            .long()
+        #            .to(accelerator.device)
+        #        )
+        #    else:
+        #        ref_attention_mask_pt = ref_mask.to(accelerator.device)
 
-            ref_model_kwargs = {
-                "attention_mask": ref_attention_mask_pt,
-                "use_cache": False,
-            }
-            ref_inputs = accelerator.unwrap_model(
-                self.model
-            ).prepare_inputs_for_generation(ref_ids, **ref_model_kwargs)
-            ref_outputs = self.model(
-                **ref_inputs,
-                output_hidden_states=True,
-                return_dict=True,
-            )
-            last_tokens_hidden = ref_outputs.hidden_states[-1]
-            ref_rewards = self.score(last_tokens_hidden)
+        #    ref_model_kwargs = {
+        #        "attention_mask": ref_attention_mask_pt,
+        #        "use_cache": False,
+        #    }
+        #    ref_inputs = accelerator.unwrap_model(
+        #        self.model
+        #    ).prepare_inputs_for_generation(ref_ids, **ref_model_kwargs)
+        #    ref_outputs = self.model(
+        #        **ref_inputs,
+        #        output_hidden_states=True,
+        #        return_dict=True,
+        #    )
+        #    last_tokens_hidden = ref_outputs.hidden_states[-1]
+        #    ref_rewards = self.score(last_tokens_hidden)
 
-            # Grab rewards for last nonpad
-            seq_lengths = (
-                (ref_attention_mask_pt.sum(axis=-1) - 1).long().to(ref_rewards.device)
-            )
-            ref_rewards = ref_rewards[
-                torch.arange(input_ids.size(0), device=ref_rewards.device), seq_lengths
-            ]
-            ref_rewards = ref_rewards.cpu()
+        #    # Grab rewards for last nonpad
+        #    seq_lengths = (
+        #        (ref_attention_mask_pt.sum(axis=-1) - 1).long().to(ref_rewards.device)
+        #    )
+        #    ref_rewards = ref_rewards[
+        #        torch.arange(input_ids.size(0), device=ref_rewards.device), seq_lengths
+        #    ]
+        #    ref_rewards = ref_rewards.cpu()
 
-            # Norm rewards with ref scores
-            rewards = rewards - ref_rewards
+        #    # Norm rewards with ref scores
+        #    rewards = rewards - ref_rewards
         #TODO: normalize_rewards here
         #rewards = (rewards - 2.34999) / (1.118213)
-        rewards = rewards - 1.0151850357063181
+        #rewards = rewards - 1.0151850357063181 # gpt-j
+        rewards = rewards - 0.524866664964914 # pythia 2.8
         return rewards
 
     def forward(

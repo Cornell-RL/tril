@@ -26,7 +26,7 @@ class PreferenceRewardModelMetric(BaseMetric):
         super().__init__(accelerator, MetricType.DIST)
         self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_id)
         #self._tokenizer.pad_token = self._tokenizer.eos_token
-        self._tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        #self._tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         self._batch_size = batch_size
 
     @property

@@ -1,3 +1,7 @@
+---
+library_name: peft
+base_model: ./models/sft_model_2.9
+---
 <h1 align="center"> <p>TRIL</p></h1>
 <h3 align="center">
     <p>Transformer Reinforcement and Imitation Learning Library</p>
@@ -197,3 +201,10 @@ Here is the citation of the accompanying paper for many of the supported algorit
 
 ## Acknowledgements
 We would like to acknowledge [RL4LMs](https://github.com/allenai/RL4LMs), [TRL](https://github.com/huggingface/trl), and [TRLx](https://github.com/CarperAI/trlx) for being inspirations for this library.
+## Training procedure
+
+
+### Framework versions
+
+
+- PEFT 0.6.2

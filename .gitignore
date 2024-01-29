@@ -1,6 +1,10 @@
 outputs/
 output/
 cache/
+runs/
+models/
+rm_pythia_2.8/
+eval_tables/
 calibrations/
 adapters/
 #reward_training/

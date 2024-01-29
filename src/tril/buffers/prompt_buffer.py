@@ -17,6 +17,7 @@ class PromptBuffer(Dataset):
         context_truncation_side="right",
         prompt_padding_side="left",
         context_padding_side="right",
+        preprocess=True,
     ):
         self._rng = np.random.default_rng()
         self.samples = samples
@@ -32,7 +33,10 @@ class PromptBuffer(Dataset):
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
         # Tokenize DB
-        self.preprocess()
+        if preprocess:
+            self.preprocess()
+        else:
+            self.db = samples
 
     def preprocess(self):
         self.db = []

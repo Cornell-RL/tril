@@ -1,0 +1,49 @@
+# @package _global_
+
+task:
+  id: tldr_openai
+  args:
+    tokenizer_id: ./models/sft_model_2.9
+    max_prompt_length: 512
+
+sampling:
+  #batch_size_per_process: 128
+  batch_size_per_process: 64
+  #batch_size_per_process: 32
+  max_prompt_len: 512
+  max_gen_len: 53
+  prompt_padding_side: left
+  prompt_truncation_side: left
+  context_padding_side: right
+  context_truncation_side: right
+  train_generation_kwargs:
+    do_sample: True
+    #do_sample: False
+    temperature: 0.7
+    #temperature: 0.0
+    max_new_tokens: ${sampling.max_gen_len}
+    min_new_tokens: ${sampling.max_gen_len}
+    top_k: 0.0
+    top_p: 1.0
+  eval_generation_kwargs:
+    do_sample: True
+    temperature: 0.01
+    max_new_tokens: ${sampling.max_gen_len}
+    min_new_tokens: ${sampling.max_gen_len}
+    top_k: 0.0
+    top_p: 1.0
+
+reward_fn:
+  id: adapter_reward
+  args:
+    adapter_id: rm_pythia_2.8
+    reward_tokenizer_id: ./models/sft_model_2.9
+
+eval_metrics:
+  - id: rm_model
+    args: 
+      tokenizer_id: ./models/sft_model_2.9
+      batch_size: 5
+  - id: rouge
+    args:
+      use_single_ref: True # note there is only 1 ref

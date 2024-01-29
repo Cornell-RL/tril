@@ -163,6 +163,21 @@ class OnlineBuffer(Dataset):
             self.advantages[:, step] = last_gae_lam
         self.returns = self.advantages + values
 
+    def whiten(self, key, shift_mean=True):
+        # `unbiased=False` matches TF `tf.nn.moments`'s setting
+        if key == "rewards":
+            values = self.rewards
+        elif key == "advantages":
+            values = self.advantages
+        mean, var = torch.mean(values), torch.var(values, unbiased=False)
+        whitened = (values - mean) * torch.rsqrt(var + 1e-8)
+        if not shift_mean:
+            whitened += mean
+        if key == "rewards":
+            self.rewards = whitened
+        elif key == "advantages":
+            self.advantages = whitened
+
     def __len__(self):
         # Note: Dataloader uses Dataset length to determine iterations. Mulitply length by num processes # noqa
         # to account for the dataset POST gather across all buffers

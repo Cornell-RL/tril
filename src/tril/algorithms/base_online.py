@@ -4,8 +4,10 @@ import time
 from typing import Any, Dict, Optional
 
 import torch
+from torch.utils.data import DataLoader
 from accelerate import Accelerator
 from accelerate.utils import DistributedType
+from datasets import load_dataset
 from omegaconf import DictConfig
 from tqdm import tqdm
 
@@ -91,16 +93,16 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
         self.metrics = build_metrics(self.cfg.get("eval_metrics", []), self.accelerator)
         self.samples_by_split = build_task(self.task_cfg)
 
-        if hasattr(self.agent.reward, "_spice_metric"):
-            assert self.agent.reward is not None
+        #if hasattr(self.agent.reward, "_spice_metric"):
+        #    assert self.agent.reward is not None
 
-            if self.accelerator.is_main_process:
-                preprocess_spice(
-                    self.agent.reward._spice_metric,
-                    self.samples_by_split,
-                    self.accelerator,
-                )
-            self.accelerator.wait_for_everyone()
+        #    if self.accelerator.is_main_process:
+        #        preprocess_spice(
+        #            self.agent.reward._spice_metric,
+        #            self.samples_by_split,
+        #            self.accelerator,
+        #        )
+        #    self.accelerator.wait_for_everyone()
 
         # KL Controller
         kl_cfg = self.alg_cfg.kl_div
@@ -138,20 +140,46 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
         self._prepare_accelerate()
 
     def _setup_dataloaders(self):
-        # Prompt Sampling
-        self.prompt_loader = create_prompt_dataloader(
-            self.sampling_cfg.batch_size_per_process,
-            self.samples_by_split["train"],
-            self.tokenizer,
-            self.sampling_cfg.max_prompt_len,
-            self.sampling_cfg.max_gen_len,
-            prompt_truncation_side=self.sampling_cfg.prompt_truncation_side,
-            context_truncation_side=self.sampling_cfg.context_truncation_side,
-            prompt_padding_side=self.sampling_cfg.prompt_padding_side,
-            context_padding_side=self.sampling_cfg.context_padding_side,
+        def collate_fn(batch):
+            prompt = torch.stack([x['query_token'] for x in batch], dim=0)
+            ref = torch.stack([x['reference_response_token'] for x in batch], dim=0)
+            prompt_mask = prompt != self.tokenizer.pad_token_id
+            ref_mask = ref != self.tokenizer.pad_token_id
+            return {
+                "prompt_or_input_encoded_pt": prompt,
+                "prompt_or_input_attention_mask_pt": prompt_mask,
+                "reference_encoded_pt": torch.cat([prompt, ref], dim=1),
+                "reference_attention_mask_pt": torch.cat([prompt_mask, ref_mask], dim=1)
+            }
+
+        dataset = load_dataset(
+            "cleanrl/summarize_from_feedback_tldr_3_filtered_oai_preprocessing_1704578687", split="train"
         )
+        dataset = dataset.with_format("torch", columns=["query_token", "reference_response_token"])
+        self.prompt_loader = DataLoader(
+            dataset,
+            batch_size=self.sampling_cfg.batch_size_per_process,
+            shuffle=True,
+            collate_fn=collate_fn,
+            drop_last=True,
+        )
+
+
+        ## Prompt Sampling
+        #self.prompt_loader = create_prompt_dataloader(
+        #    self.sampling_cfg.batch_size_per_process,
+        #    self.samples_by_split["train"],
+        #    self.tokenizer,
+        #    self.sampling_cfg.max_prompt_len,
+        #    self.sampling_cfg.max_gen_len,
+        #    prompt_truncation_side=self.sampling_cfg.prompt_truncation_side,
+        #    context_truncation_side=self.sampling_cfg.context_truncation_side,
+        #    prompt_padding_side=self.sampling_cfg.prompt_padding_side,
+        #    context_padding_side=self.sampling_cfg.context_padding_side,
+        #)
         # Processed Prompts[str] -> References[List[str]]
-        self.reference_map = self.prompt_loader.dataset.reference_map
+        #self.reference_map = self.prompt_loader.dataset.reference_map
+        self.reference_map = None
 
         # Sample Buffer per Process
         self.buffer = OnlineBuffer(
@@ -274,7 +302,7 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
         all_tokens = gen_output["sequences"]
 
         # Truncate based on eos
-        all_tokens = truncate_response(self.tokenizer, all_tokens)
+        truncated_all_tokens = truncate_response(self.tokenizer, all_tokens)
 
         if (
             self.accelerator.unwrap_model(self.agent.policy).model_type
@@ -287,32 +315,31 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
                 dim=1,
             )
 
-        # Pad
-        if seq_length < self.max_gen_len:
-            #NOTE with truncate this shouldn't happen
-            prev_padding_side = self.tokenizer.padding_side
-            self.tokenizer.padding_side = "right"
-            padded_out = self.tokenizer.pad(
-                {"input_ids": all_tokens},
-                padding="max_length",
-                max_length=self.max_prompt_len + self.max_gen_len,
-            )
-            self.tokenizer.padding_side = prev_padding_side
-            all_tokens = padded_out["input_ids"].to(self.accelerator.device)
+        ## Pad
+        #if seq_length < self.max_gen_len:
+        #    #NOTE with truncate this shouldn't happen
+        #    prev_padding_side = self.tokenizer.padding_side
+        #    self.tokenizer.padding_side = "right"
+        #    padded_out = self.tokenizer.pad(
+        #        {"input_ids": all_tokens},
+        #        padding="max_length",
+        #        max_length=self.max_prompt_len + self.max_gen_len,
+        #    )
+        #    self.tokenizer.padding_side = prev_padding_side
+        #    all_tokens = padded_out["input_ids"].to(self.accelerator.device)
 
         # Reward Computation
         terminal_rewards = self.agent.compute_reward(
-            all_tokens=all_tokens,
+            #all_tokens=all_tokens,
+            all_tokens=truncated_all_tokens, # USE TRUNCATED FOR REWARDS
             obs_tensor=obs_tensor,
             reference_map=self.reference_map,
         )
-
         # Reward Penalty Here
-        contain_pad_token = torch.any(all_tokens[:, -50:] == self.tokenizer.pad_token_id, dim=-1).to(self.accelerator.device)
+        contain_pad_token = torch.any(truncated_all_tokens[:, -self.max_gen_len:] == self.tokenizer.eos_token_id, dim=-1).to(self.accelerator.device)
         terminal_rewards = torch.where(
             contain_pad_token.cpu(), terminal_rewards, torch.full_like(terminal_rewards, -1)
         )
-
 
         # Everything is shape (Batch size, gen length)
         with torch.no_grad():
@@ -332,12 +359,20 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
             values = value_out.values.cpu()
 
         all_tokens = all_tokens.cpu()
+
         masks = (
             all_tokens[:, -self.max_gen_len :]
             .not_equal(self.tokenizer.pad_token_id)
             .long()
         )
-        seq_lens = masks[:, -self.max_gen_len :].sum(axis=1)
+
+        # Calculate Sequence Lengths with truncated generations
+        truncated_masks = (
+            truncated_all_tokens[:, -self.max_gen_len :]
+            .not_equal(self.tokenizer.pad_token_id)
+            .long()
+        )
+        seq_lens = truncated_masks[:, -self.max_gen_len :].sum(axis=1)
 
         # TODO: clean up
         rewards = torch.zeros_like(masks).float()  # NOT sure if needs to be float
@@ -421,8 +456,14 @@ class BaseOnPolicyAlgorithm(BaseAlgorithm):
         self.buffer.gather_buffer(self.accelerator)
 
     def update_buffer(self):
+        # Reward Whitening
+        #self.buffer.whiten("rewards", shift_mean=False)
+
         # Advantage Computation
         self.buffer.compute_returns_and_advantage()
+
+        # Advantage Whitening
+        self.buffer.whiten("advantages", shift_mean=True)
 
         # Gather Metrics
         self.accelerator.wait_for_everyone()
