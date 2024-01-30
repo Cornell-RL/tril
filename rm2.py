@@ -32,6 +32,7 @@ from transformers import (
     PreTrainedModel,
     get_scheduler,
 )
+from peft import LoraConfig, get_peft_model
 
 
 @dataclass
@@ -113,7 +114,8 @@ class Args:
     """Number of warm up steps for the scheduler"""
 
     #world_size: Optional[int] = 4
-    world_size: Optional[int] = 8
+    world_size: Optional[int] = 6
+    #world_size: Optional[int] = 8
     """The number of processes (GPUs) to use"""
     num_train_epochs: int = 1
     """Number of epochs to train"""
@@ -121,21 +123,26 @@ class Args:
     """The number of updates to train"""
     #gradient_accumulation_steps: int = 16
     #gradient_accumulation_steps: int = 4
-    gradient_accumulation_steps: int = 2
+    #gradient_accumulation_steps: int = 2
+    gradient_accumulation_steps: int = 5
     """The number of gradient accumulation steps"""
     #local_micro_batch_size: Optional[int] = 2
     #local_micro_batch_size: Optional[int] = 4
-    local_micro_batch_size: Optional[int] = 4
+    #local_micro_batch_size: Optional[int] = 4
+    local_micro_batch_size: Optional[int] = 2
     """The micro batch size per GPU (HF's `per_device_train_batch_size`)"""
     total_episodes: Optional[int] = None
     """The total number of episodes in the dataset"""
     #micro_batch_size: Optional[int] = 16
     #micro_batch_size: Optional[int] = 32
-    micro_batch_size: Optional[int] = 32
+    #micro_batch_size: Optional[int] = 32
+    micro_batch_size: Optional[int] = 12
     """The micro batch size across devices (HF's `per_device_train_batch_size` * `world_size`)"""
-    local_batch_size: Optional[int] = 8
+    #local_batch_size: Optional[int] = 8
+    local_batch_size: Optional[int] = 10
     """The batch size per GPU (HF's `per_device_train_batch_size` * `gradient_accumulation_steps`)"""
-    batch_size: Optional[int] = 64
+    #batch_size: Optional[int] = 64
+    batch_size: Optional[int] = 60
     """The batch size across devices (HF's `per_device_train_batch_size` * `world_size` * `gradient_accumulation_steps`)"""
     local_eval_batch_size: int = 2
     """per rank eval batch size"""
@@ -150,7 +157,7 @@ class Args:
         default_factory=lambda: ["attn_pdrop", "embd_pdrop", "resid_pdrop", "summary_first_dropout"]
     )
     """Which layers to apply dropout to"""
-    output_dir: str = "models/reward_model_2.8_full"
+    output_dir: str = "models/reward_model_2.8_lora"
     """Where to save the model"""
     #label_dataset: str = "cleanrl/summarize_from_feedback_oai_preprocessing_1704563162"
     label_dataset: str = "vwxyzjn/summarize_from_feedback_oai_preprocessing_1706381144"
@@ -283,6 +290,33 @@ class ScalarModelConfig(PretrainedConfig):
         self.hidden_size = hidden_size
         self.bias = bias
 
+class LoraScalarModel(PreTrainedModel):
+    config_class = ScalarModelConfig
+
+    def __init__(self, config: ScalarModelConfig):
+        super().__init__(config)
+        self.config = config
+        self.peft_config = LoraConfig(
+            r=1024,
+            lora_alpha=2048,
+            lora_dropout=0.0,
+            bias="none",
+        )
+        lm_backbone = AutoModel.from_pretrained(
+            config.base_model,
+            config=self.config.base_config,
+            trust_remote_code=True,
+        )
+        self.lm_backbone = get_peft_model(lm_backbone, peft_config=self.peft_config)
+        self.scalar_head = layer_init(
+            nn.Linear(self.config.hidden_size, 1),
+            std=1 / np.sqrt(self.config.hidden_size + 1),
+        )
+
+    def forward(self, **kwargs):
+        output = self.lm_backbone(**kwargs)
+        reward = self.scalar_head(output.hidden_states[-1]) - self.config.bias
+        return reward
 
 class ScalarModel(PreTrainedModel):
     config_class = ScalarModelConfig
@@ -447,7 +481,8 @@ if __name__ == "__main__":
         hidden_size=model_config.hidden_size,
     )
     if len(args.reward_model_path) == 0:
-        model: PreTrainedModel = ScalarModel(scalar_model_config)
+        #model: PreTrainedModel = ScalarModel(scalar_model_config)
+        model: PreTrainedModel = LoraScalarModel(scalar_model_config)
     else:
         model: PreTrainedModel = ScalarModel.from_pretrained(
             args.reward_model_path,

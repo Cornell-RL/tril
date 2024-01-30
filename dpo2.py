@@ -525,7 +525,7 @@ if __name__ == "__main__":
                 )
 
     if args.run_eval:
-        _, evaluate_df = evaluate_policy(args, model, tokenizer, sft_validation_dataloader, validation_generation_config, sampling=False)
+        _, evaluate_df = evaluate_policy(args, accelerator.unwrap_model(model), tokenizer, sft_validation_dataloader, validation_generation_config, sampling=False)
         if accelerator.is_main_process:
             evaluate_df.to_csv(f"runs/{run_name}/table.csv")
             if args.track:

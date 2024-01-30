@@ -155,8 +155,8 @@ class Args:
     """The number of gradient accumulation steps"""
     local_micro_batch_size: Optional[int] = 4
     """The micro batch size per GPU (HF's `per_device_train_batch_size`)"""
-    #total_episodes: Optional[int] = 1000000
-    total_episodes: Optional[int] = 300000
+    total_episodes: Optional[int] = 1000000
+    #total_episodes: Optional[int] = 300000
     """The total number of episodes in the dataset"""
     micro_batch_size: Optional[int] = 16
     """The micro batch size across devices (HF's `per_device_train_batch_size` * `world_size`)"""
