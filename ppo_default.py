@@ -33,7 +33,7 @@ from transformers import (
     PreTrainedModel,
 )
 from peft import get_peft_model, LoraConfig
-from rm import ScalarModel, ScalarModelConfig
+from rm2 import ScalarModel, ScalarModelConfig
 
 INVALID_LOGPROB = 1.0
 
@@ -105,11 +105,12 @@ class TaskQueryHParams:
 @dataclass
 class Args:
     # common args
-    exp_name: str = "pythia_ppo_lora_2.9"
+    exp_name: str = "pythia_ppo_lora_2.8_new"
     """the name of this experiment"""
     seed: int = 555134
     """seed of the experiment"""
-    track: bool = True
+    #track: bool = True
+    track: bool = False
     """if toggled, this experiment will be tracked with Weights and Biases"""
     wandb_project_name: str = "tldr_summarize_costa_lora"
     """the wandb's project name"""
@@ -154,7 +155,8 @@ class Args:
     """The number of gradient accumulation steps"""
     local_micro_batch_size: Optional[int] = 4
     """The micro batch size per GPU (HF's `per_device_train_batch_size`)"""
-    total_episodes: Optional[int] = 1000000
+    #total_episodes: Optional[int] = 1000000
+    total_episodes: Optional[int] = 300000
     """The total number of episodes in the dataset"""
     micro_batch_size: Optional[int] = 16
     """The micro batch size across devices (HF's `per_device_train_batch_size` * `world_size`)"""
@@ -179,7 +181,8 @@ class Args:
     """the name of the pretrained model to use"""
     offload: bool = False
     """Whether to offload ref policy and reward model to CPU"""
-    reward_model_path: str = "./models/reward_model_2.9"
+    #reward_model_path: str = "./models/reward_model_2.9"
+    reward_model_path: str = "./models/reward_model_2.8_full"
     """the name of the pretrained model to use"""
     sft_model_path: str = "jdchang/tldr_sft_pythia_2.8"
     """the name of the pretrained model to use"""
@@ -532,8 +535,10 @@ if __name__ == "__main__":
         bias="none",
     )
     policy = get_peft_model(policy, peft_config=peft_config)
+    critic = get_peft_model(critic, peft_config=peft_config)
     # critic.lm_backbone.gradient_checkpointing_enable()
     # policy.gradient_checkpointing_enable()
+    #import pdb; pdb.set_trace()
     accelerator.print(policy)
     accelerator.print(critic)
     policy.generation_config.eos_token_id = None  # disable `pad_token_id` and `eos_token_id` because we just want to
@@ -640,7 +645,7 @@ if __name__ == "__main__":
                 validation_generation_config,
             )
             validation_score = eval_storage.score[0]
-            if args.print_sample_output_freq > 0 and (update - 1) % args.print_sample_output_freq == 0:
+            if args.print_sample_output_freq > 0 and update > 1 and (update - 1) % args.print_sample_output_freq == 0:
                 if accelerator.is_main_process:
                     eval_df.to_csv(f"runs/{run_name}/table_{global_step}.csv")
                     if args.track:

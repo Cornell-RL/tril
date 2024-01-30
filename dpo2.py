@@ -32,6 +32,7 @@ from transformers import (
     PreTrainedModel,
     get_scheduler,
 )
+from peft import get_peft_model, LoraConfig
 
 
 @dataclass
@@ -138,7 +139,7 @@ class Args:
         default_factory=lambda: ["attn_pdrop", "embd_pdrop", "resid_pdrop", "summary_first_dropout"]
     )
     """Which layers to apply dropout to"""
-    output_dir: str = "models/dpo_policy_model_2.8"
+    output_dir: str = "models/dpo_policy_model_2.8_lora"
     """Where to save the model"""
     label_dataset: str = "cleanrl/summarize_from_feedback_oai_preprocessing_1705009345"
     """the name of the dataset to use for labels in `https://huggingface.co/datasets/vwxyzjn/lm-human-preferences`"""
@@ -426,6 +427,8 @@ if __name__ == "__main__":
     )
     model.generation_config.eos_token_id = None  # disable `pad_token_id` and `eos_token_id` because we just want to
     model.generation_config.pad_token_id = None  # generate tokens without truncation / padding
+    peft_config = LoraConfig(r = 1024, lora_alpha=2048, bias='none', lora_dropout=0.0)
+    model = get_peft_model(model, peft_config=peft_config)
     ref_model = AutoModelForCausalLM.from_pretrained(args.base_model)
     # if accelerator.is_main_process:
     #     pprint(model_config)

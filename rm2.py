@@ -124,11 +124,13 @@ class Args:
     gradient_accumulation_steps: int = 2
     """The number of gradient accumulation steps"""
     #local_micro_batch_size: Optional[int] = 2
+    #local_micro_batch_size: Optional[int] = 4
     local_micro_batch_size: Optional[int] = 4
     """The micro batch size per GPU (HF's `per_device_train_batch_size`)"""
     total_episodes: Optional[int] = None
     """The total number of episodes in the dataset"""
     #micro_batch_size: Optional[int] = 16
+    #micro_batch_size: Optional[int] = 32
     micro_batch_size: Optional[int] = 32
     """The micro batch size across devices (HF's `per_device_train_batch_size` * `world_size`)"""
     local_batch_size: Optional[int] = 8
@@ -537,7 +539,7 @@ if __name__ == "__main__":
             del evaluate_df
             torch.cuda.empty_cache()
 
-    norm_dataset = load_dataset(args.query_dataset, split="train")
+    norm_dataset = load_dataset(args.task.query_dataset, split="train")
     norm_dataset = norm_dataset.with_format("torch", columns=["query_token", "reference_response_token"])
     norm_dataset = norm_dataset.shuffle(seed=local_seed)
     norm_dataloader = DataLoader(norm_dataset, batch_size=args.local_eval_batch_size)
@@ -600,6 +602,34 @@ if __name__ == "__main__":
             )
             if args.push_to_hub:
                 unwrapped.push_to_hub(repo_id, revision=f"seed{args.seed}_{str(time_int)}", safe_serialization=False)
+
+    # save model
+    #if args.output_dir and args.num_train_epochs > 0:
+    #    os.makedirs(os.path.dirname(args.output_dir), exist_ok=True)
+    #    time_tensor = torch.tensor([int(time.time())], device=device)
+    #    time_int = accelerator.gather(time_tensor)[0].item()  # avoid different timestamps across processes
+    #    repo_name = f"{args.base_model.replace('/', '_')}__{args.exp_name}__tldr"
+    #    repo_id = f"{args.hf_entity}/{repo_name}" if args.hf_entity else repo_name
+
+    #    if accelerator.is_main_process:
+    #        tokenizer.save_pretrained(args.output_dir, repo_id=repo_id)
+    #        if args.push_to_hub:
+    #            tokenizer.push_to_hub(repo_id, revision=f"seed{args.seed}_{str(time_int)}")
+
+    #    unwrapped: PreTrainedModel = accelerator.unwrap_model(model)
+    #    accelerator.wait_for_everyone()
+    #    if accelerator.is_main_process:
+    #        unwrapped.config.bias = norm_df["predicted_reward"].mean()
+    #        unwrapped.save_pretrained(
+    #            args.output_dir,
+    #            is_main_process=accelerator.is_main_process,
+    #            save_function=accelerator.save,
+    #            state_dict=accelerator.get_state_dict(model),
+    #            safe_serialization=False,
+    #            repo_id=repo_id,
+    #        )
+    #        if args.push_to_hub:
+    #            unwrapped.push_to_hub(repo_id, revision=f"seed{args.seed}_{str(time_int)}", safe_serialization=False)
 
 # if __name__ == "__main__":
 #     args = tyro.cli(Args)

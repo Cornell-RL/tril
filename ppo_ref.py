@@ -33,7 +33,7 @@ from transformers import (
     PreTrainedModel,
 )
 from peft import get_peft_model, LoraConfig
-from rm import ScalarModel, ScalarModelConfig
+from rm2 import ScalarModel, ScalarModelConfig
 from tril.utils.generation_mixin import override_generation_routines
 from tril.utils.logit_processors import RollinProcessor
 from transformers.generation.logits_process import LogitsProcessorList
@@ -107,12 +107,14 @@ class TaskQueryHParams:
 
 @dataclass
 class Args:
+    beta: float = 1.0
     # common args
-    exp_name: str = "pythia_pporef_lora_2.9_rollin_reg"
+    exp_name: str = "pythia_pporef_lora_2.8_new"
     """the name of this experiment"""
     seed: int = 555134
     """seed of the experiment"""
-    track: bool = True
+    #track: bool = True
+    track: bool = False
     """if toggled, this experiment will be tracked with Weights and Biases"""
     wandb_project_name: str = "tldr_summarize_costa_lora"
     """the wandb's project name"""
@@ -182,7 +184,8 @@ class Args:
     """the name of the pretrained model to use"""
     offload: bool = False
     """Whether to offload ref policy and reward model to CPU"""
-    reward_model_path: str = "./models/reward_model_2.9"
+    #reward_model_path: str = "./models/reward_model_2.9"
+    reward_model_path: str = "./models/reward_model_2.8_full"
     """the name of the pretrained model to use"""
     sft_model_path: str = "jdchang/tldr_sft_pythia_2.8"
     """the name of the pretrained model to use"""
@@ -191,7 +194,7 @@ class Args:
     )
     """Which layers to apply dropout to"""
     #output_dir: str = "models/pporef_model"
-    output_dir: str = "models/pporef_model_0.2"
+    output_dir: str = "models/pporef_model_new"
     """Where to save the model"""
     task: TaskHParams = field(default_factory=TaskHParams)
     reward: RewardHParams = field(default_factory=RewardHParams)
@@ -547,6 +550,7 @@ if __name__ == "__main__":
         bias="none",
     )
     policy = get_peft_model(policy, peft_config=peft_config)
+    critic = get_peft_model(critic, peft_config=peft_config)
     # critic.lm_backbone.gradient_checkpointing_enable()
     # policy.gradient_checkpointing_enable()
     accelerator.print(policy)
@@ -657,7 +661,7 @@ if __name__ == "__main__":
                 validation_generation_config,
             )
             validation_score = eval_storage.score[0]
-            if args.print_sample_output_freq > 0 and (update - 1) % args.print_sample_output_freq == 0:
+            if args.print_sample_output_freq > 0 and update > 1 and (update - 1) % args.print_sample_output_freq == 0:
                 if accelerator.is_main_process:
                     eval_df.to_csv(f"runs/{run_name}/table_{global_step}.csv")
                     if args.track:
@@ -737,8 +741,8 @@ if __name__ == "__main__":
                     generation_config,
                     reference={
                         "ref": ref,
-                        #"beta": 1.0,
-                        "beta": 0.2,
+                        "beta": args.beta,
+                        #"beta": 0.2,
                         "rng": rng
                     },
                 )
