@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH -J PPO
+#SBATCH -o /home/jdc396/slurm/logs/%j.out
+#SBATCH -e /home/jdc396/slurm/logs/%j.err
+#SBATCH --requeue
+#SBATCH -N 1
+#SBATCH -n 24
+#SBATCH --mem=500G
+#SBATCH -t 240:00:00
+#SBATCH --partition=sun
+#SBATCH --gres=gpu:a6000:8
+#SBATCH --nodelist=sun-compute-01
+
+source /home/jdc396/miniconda3/etc/profile.d/conda.sh
+conda activate release_test
+cd /home/jdc396/tril
+
+./ppo.sh

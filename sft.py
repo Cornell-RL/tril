@@ -33,6 +33,7 @@ from transformers import (
     get_scheduler,
 )
 
+from peft import get_peft_model, LoraConfig
 rouge = hf_evaluate.load("rouge")
 
 
@@ -67,7 +68,7 @@ class TaskHParams:
 class Args:
     # common args
     #exp_name: str = "pythia_sft"
-    exp_name: str = "pythia_sft_2.9"
+    exp_name: str = "pythia_CNN_SFT"
     """the name of this experiment"""
     seed: int = 555134
     """seed of the experiment"""
@@ -106,25 +107,25 @@ class Args:
     warm_up_steps: int = 0
     """Number of warm up steps for the scheduler"""
 
-    world_size: Optional[int] = 4
+    world_size: Optional[int] = 8
     """The number of processes (GPUs) to use"""
     num_train_epochs: int = 1
     """Number of epochs to train"""
     num_updates: Optional[int] = None
     """The number of updates to train"""
-    gradient_accumulation_steps: int = 16
+    gradient_accumulation_steps: int = 8
     """The number of gradient accumulation steps"""
-    local_micro_batch_size: Optional[int] = 1
+    local_micro_batch_size: Optional[int] = 2
     """The micro batch size per GPU (HF's `per_device_train_batch_size`)"""
-    total_episodes: Optional[int] = 116722
+    total_episodes: Optional[int] = None
     """The total number of episodes in the dataset"""
-    micro_batch_size: Optional[int] = 8
+    micro_batch_size: Optional[int] = 16
     """The micro batch size across devices (HF's `per_device_train_batch_size` * `world_size`)"""
-    local_batch_size: Optional[int] = 2
+    local_batch_size: Optional[int] = 16
     """The batch size per GPU (HF's `per_device_train_batch_size` * `gradient_accumulation_steps`)"""
     batch_size: Optional[int] = 128
     """The batch size across devices (HF's `per_device_train_batch_size` * `world_size` * `gradient_accumulation_steps`)"""
-    local_eval_batch_size: int = 4
+    local_eval_batch_size: int = 2
     """per rank eval batch size"""
 
     # other args
@@ -135,7 +136,7 @@ class Args:
         default_factory=lambda: ["attn_pdrop", "embd_pdrop", "resid_pdrop", "summary_first_dropout"]
     )
     """Which layers to apply dropout to"""
-    output_dir: str = "models/sft_model"
+    output_dir: str = "models/sft_model_cnn"
     """Where to save the model"""
     task: TaskHParams = field(default_factory=TaskHParams)
 
@@ -215,7 +216,8 @@ def evaluate(args: Args, accelerator, tokenizer, model, dataloader, generation_c
     for _, data in tqdm(enumerate(dataloader)):
         with torch.no_grad():
             queries = data["query_token"]
-            reference_responses = data["reference_response_token"]
+            #reference_responses = data["reference_response_token"]
+            reference_responses = data["chosen_token"]
             context_length = queries.shape[1]
             query_reference_responses = torch.cat((queries, reference_responses), dim=1)
             output = forward(model, query_reference_responses, tokenizer)
@@ -283,28 +285,52 @@ if __name__ == "__main__":
     args.micro_batch_size = int(args.local_micro_batch_size * args.world_size)
     args.batch_size = int(args.local_batch_size * args.world_size)
 
-    # load dataset
-    dataset = load_dataset(args.task.query_dataset, split="train")
-    dataset = dataset.shuffle(seed=local_seed)
-    dataset = dataset.with_format("torch", columns=["query_reference_response_token"])
-    dataloader = DataLoader(dataset, batch_size=args.local_micro_batch_size)
-    validation_dataset = load_dataset(args.task.query_dataset, split="validation")
-    validation_dataset = validation_dataset.with_format("torch", columns=["query_token", "reference_response_token"])
-    validation_dataloader = DataLoader(validation_dataset, batch_size=args.local_eval_batch_size)
-    accelerator.print("The number of samples in dataset", len(dataset))
-    accelerator.print("The number of samples in validation_dataset", len(validation_dataset))
-    args.total_episodes = len(dataset)
-    args.num_updates = args.total_episodes // args.batch_size
-
     tokenizer = AutoTokenizer.from_pretrained(
         args.base_model,
         padding_side="right",
         trust_remote_code=True,
     )
     # we use the padding token manually but do not resize the token embedding of the model
-    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     if args.task.truncate_token == "eos":
         args.task.truncate_token_id = tokenizer.eos_token_id
+
+    # load dataset
+    #dataset = load_dataset(args.task.query_dataset, split="train")
+    dataset = load_dataset("cnn_dailymail", "1.0.0", split="train")
+
+    def tokenize_cnn(item):
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+        texts = [article + "\n\nTL;DR: " + summ for article, summ in zip(item['article'], item['highlights'])]
+        outputs = tokenizer(
+            texts,
+            truncation=True,
+            padding='max_length',
+            max_length=700,
+            return_tensors='pt',
+        )
+        return {"query_reference_response_token": outputs["input_ids"]}
+    dataset = dataset.map(tokenize_cnn, batched=True)
+    dataset = dataset.shuffle(seed=local_seed)
+    dataset = dataset.with_format("torch", columns=["query_reference_response_token"])
+    dataset = dataset.remove_columns(["article", "highlights", "id",])
+    #import pdb; pdb.set_trace()
+    dataloader = DataLoader(dataset, batch_size=args.local_micro_batch_size)
+    #validation_dataset = load_dataset(args.task.query_dataset, split="validation")
+    validation_dataset = load_dataset("vwxyzjn/summarize_from_feedback_oai_preprocessing_1706381144", split="validation_cnndm")
+    validation_dataset = validation_dataset.with_format(
+        "torch",
+        columns=[
+            "query_token",
+            "chosen_token",
+        ],
+    )
+    validation_dataloader = DataLoader(validation_dataset, batch_size=args.local_eval_batch_size)
+    accelerator.print("The number of samples in dataset", len(dataset))
+    accelerator.print("The number of samples in validation_dataset", len(validation_dataset))
+    args.total_episodes = len(dataset)
+    args.num_updates = args.total_episodes // args.batch_size
+
+    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
     console = Console(force_terminal=True)
     run_name = f"{args.exp_name}__{args.seed}__{int(time.time())}"
@@ -345,6 +371,17 @@ if __name__ == "__main__":
     )
     model.generation_config.eos_token_id = None  # disable `pad_token_id` and `eos_token_id` because we just want to
     model.generation_config.pad_token_id = None  # generate tokens without truncation / padding
+    # model -> (context).... token token token EOS        token token
+    #                          0    0     0    RM(....EOS) 0  0 0 0 
+    #                        attention mask [1 ,1 , 1,... 1, 1, 1]
+    peft_config = LoraConfig(
+        r=1024,
+        lora_alpha=2048,
+        #lora_dropout=0.05,
+        lora_dropout=0.0,
+        bias="none",
+    )
+    model = get_peft_model(model, peft_config=peft_config)
     if accelerator.is_main_process:
         pprint(model_config)
     if args.optimizer == "adam":

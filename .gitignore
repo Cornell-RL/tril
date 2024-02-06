@@ -1,4 +1,5 @@
 outputs/
+modelsv2/
 output/
 cache/
 runs/
@@ -7,6 +8,8 @@ rm_pythia_2.8/
 eval_tables/
 calibrations/
 adapters/
+final_results/
+bug_final_results/
 #reward_training/
 *.slurm
 *.out

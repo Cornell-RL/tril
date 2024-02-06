@@ -110,23 +110,23 @@ class Args:
     warm_up_steps: int = 0
     """Number of warm up steps for the scheduler"""
 
-    world_size: Optional[int] = 6
+    world_size: Optional[int] = 8
     """The number of processes (GPUs) to use"""
     num_train_epochs: int = 1
     """Number of epochs to train"""
     num_updates: Optional[int] = None
     """The number of updates to train"""
-    gradient_accumulation_steps: int = 5
+    gradient_accumulation_steps: int = 4
     """The number of gradient accumulation steps"""
     local_micro_batch_size: Optional[int] = 2
     """The micro batch size per GPU (HF's `per_device_train_batch_size`)"""
     total_episodes: Optional[int] = None
     """The total number of episodes in the dataset"""
-    micro_batch_size: Optional[int] = 12
+    micro_batch_size: Optional[int] = 16
     """The micro batch size across devices (HF's `per_device_train_batch_size` * `world_size`)"""
-    local_batch_size: Optional[int] = 10
+    local_batch_size: Optional[int] = 8
     """The batch size per GPU (HF's `per_device_train_batch_size` * `gradient_accumulation_steps`)"""
-    batch_size: Optional[int] = 60
+    batch_size: Optional[int] = 64
     """The batch size across devices (HF's `per_device_train_batch_size` * `world_size` * `gradient_accumulation_steps`)"""
     local_eval_batch_size: int = 2
     """per rank eval batch size"""
@@ -430,6 +430,8 @@ if __name__ == "__main__":
     peft_config = LoraConfig(r = 1024, lora_alpha=2048, bias='none', lora_dropout=0.0)
     model = get_peft_model(model, peft_config=peft_config)
     ref_model = AutoModelForCausalLM.from_pretrained(args.base_model)
+
+
     # if accelerator.is_main_process:
     #     pprint(model_config)
     if args.optimizer == "adam":

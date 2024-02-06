@@ -340,6 +340,7 @@ class ScalarModel(PreTrainedModel):
         return reward
 
 
+
 def get_reward(model, query_responses, tokenizer):
     attention_mask = query_responses != tokenizer.pad_token_id
     input_ids = torch.masked_fill(query_responses, ~attention_mask, 0)
@@ -481,8 +482,8 @@ if __name__ == "__main__":
         hidden_size=model_config.hidden_size,
     )
     if len(args.reward_model_path) == 0:
-        #model: PreTrainedModel = ScalarModel(scalar_model_config)
-        model: PreTrainedModel = LoraScalarModel(scalar_model_config)
+        model: PreTrainedModel = ScalarModel(scalar_model_config)
+        #model: PreTrainedModel = LoraScalarModel(scalar_model_config)
     else:
         model: PreTrainedModel = ScalarModel.from_pretrained(
             args.reward_model_path,
